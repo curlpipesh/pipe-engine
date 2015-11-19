@@ -1,7 +1,7 @@
-package me.curlpipesh.game.util;
+package me.curlpipesh.engine.util;
 
 import lombok.Getter;
-import me.curlpipesh.game.world.Chunk;
+import me.curlpipesh.engine.world.Chunk;
 
 /**
  * @author audrey

@@ -1,12 +1,12 @@
-package me.curlpipesh.game.world;
+package me.curlpipesh.engine.world;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import me.curlpipesh.game.Game;
-import me.curlpipesh.game.Game.GameState;
-import me.curlpipesh.game.logging.LoggerFactory;
-import me.curlpipesh.game.render.RenderServer;
-import me.curlpipesh.game.util.Vec2d;
+import me.curlpipesh.engine.Engine;
+import me.curlpipesh.engine.Engine.EngineState;
+import me.curlpipesh.engine.logging.LoggerFactory;
+import me.curlpipesh.engine.render.RenderServer;
+import me.curlpipesh.engine.util.Vec2d;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -22,7 +22,7 @@ public class World {
     private final Set<Chunk> loadedChunks;
 
     @Getter(AccessLevel.PACKAGE)
-    private final GameState state;
+    private final EngineState state;
 
     @Getter
     private final RenderServer renderServer;
@@ -33,7 +33,7 @@ public class World {
     @Getter(AccessLevel.PACKAGE)
     private final Logger logger;
 
-    public World(final GameState state, final String name) {
+    public World(final EngineState state, final String name) {
         this.name = name;
         this.state = state;
         loadedChunks = new LinkedHashSet<>();
@@ -50,7 +50,7 @@ public class World {
         loadedChunks.stream().forEach(Chunk::generate);
         final long t1 = System.nanoTime();
         final long ms = TimeUnit.NANOSECONDS.toMillis(t1 - t0);
-        Game.getLogger().config(String.format("World generation took %dms.", ms));
+        Engine.getLogger().config(String.format("World generation took %dms.", ms));
     }
 
     public void meshWorld() {
@@ -58,7 +58,7 @@ public class World {
         loadedChunks.stream().forEach(Chunk::mesh);
         final long t1 = System.nanoTime();
         final long ms = TimeUnit.NANOSECONDS.toMillis(t1 - t0);
-        Game.getLogger().config(String.format("World mesh took %dms.", ms));
+        Engine.getLogger().config(String.format("World mesh took %dms.", ms));
     }
 
     public void setColorAtPosition(final double x, final double y, final int color) {

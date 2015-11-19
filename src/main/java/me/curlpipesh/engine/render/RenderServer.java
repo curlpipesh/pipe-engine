@@ -1,10 +1,10 @@
-package me.curlpipesh.game.render;
+package me.curlpipesh.engine.render;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import me.curlpipesh.game.Game.GameState;
-import me.curlpipesh.game.logging.LoggerFactory;
-import me.curlpipesh.game.util.Vec2d;
+import me.curlpipesh.engine.Engine.EngineState;
+import me.curlpipesh.engine.logging.LoggerFactory;
+import me.curlpipesh.engine.util.Vec2d;
 import me.curlpipesh.gl.tessellation.impl.VAOTessellator;
 import me.curlpipesh.gl.vbo.Vbo;
 import org.lwjgl.opengl.GL11;
@@ -33,12 +33,12 @@ public class RenderServer {
     private final Logger logger;
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final GameState state;
+    private final EngineState state;
 
     @SuppressWarnings("FieldCanBeLocal")
     private final long id;
 
-    public RenderServer(final GameState state) {
+    public RenderServer(final EngineState state) {
         this.state = state;
         id = UUID.randomUUID().getMostSignificantBits() & 0xFFFFFFFFL;
         requests = new LinkedList<>();

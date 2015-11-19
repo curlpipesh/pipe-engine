@@ -1,15 +1,16 @@
-package me.curlpipesh.game;
+package me.curlpipesh.engine;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
 import lombok.experimental.NonFinal;
-import me.curlpipesh.game.player.Player;
-import me.curlpipesh.game.logging.GeneralLogHandler;
-import me.curlpipesh.game.util.JavaUtils;
-import me.curlpipesh.game.util.Vec2d;
-import me.curlpipesh.game.world.World;
+import me.curlpipesh.engine.logging.GeneralLogHandler;
+import me.curlpipesh.engine.player.Player;
+import me.curlpipesh.engine.profiler.Profiler;
+import me.curlpipesh.engine.util.JavaUtils;
+import me.curlpipesh.engine.util.Vec2d;
+import me.curlpipesh.engine.world.World;
 import me.curlpipesh.gl.util.DisplayUtil;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
@@ -19,6 +20,8 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.Util;
 
 import java.util.Arrays;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,8 +30,8 @@ import java.util.logging.Logger;
  * @since 11/11/15.
  */
 @SuppressWarnings("unused")
-public class Game {
-    private static final Game instance = new Game();
+public class Engine {
+    private static final Engine instance = new Engine();
 
     private long lastFrame;
     private long lastFPS;
@@ -37,11 +40,13 @@ public class Game {
     private static final Logger logger;
 
     @Getter
-    private final GameState state = new GameState();
+    private final EngineState state = new EngineState();
 
     public static void main(final String[] args) {
         instance.run();
     }
+
+    int updates = 0;
 
     static {
         logger = Logger.getLogger("Engine");
@@ -79,7 +84,7 @@ public class Game {
             final int delta = getDelta();
             update(delta);
             render(delta);
-            Display.sync(60);
+            Display.sync(state.getFpsTarget());
         }
         Display.destroy();
     }
@@ -104,24 +109,28 @@ public class Game {
     }
 
     private void update(final int delta) {
+        ++updates;
         updateFPS();
+        Profiler.startSection("worldUpdate");
         state.getWorld().update(delta);
-        // 4 * ratio based off of 60 FPS
-        final double offsetAmount = 4D * ((double) delta / 16.67D);
-        if(Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-            state.getOffset().addY(offsetAmount);
-        }
-        if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-            state.getOffset().addY(-offsetAmount);
-        }
-        if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
-            state.getOffset().addX(offsetAmount);
-        }
-        if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
-            state.getOffset().addX(-offsetAmount);
-        }
+        Profiler.endStartSection("input");
 
         if(Display.isActive()) {
+            // 4 * ratio based off of 60 FPS
+            final double offsetAmount = 4D * ((double) delta / 16.67D);
+            if(Keyboard.isKeyDown(Keyboard.KEY_UP)) {
+                state.getOffset().addY(offsetAmount);
+            }
+            if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
+                state.getOffset().addY(-offsetAmount);
+            }
+            if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
+                state.getOffset().addX(offsetAmount);
+            }
+            if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
+                state.getOffset().addX(-offsetAmount);
+            }
+
             while(Mouse.next()) {
                 if(Mouse.getEventButtonState()) {
                     if(Mouse.getEventButton() == 0) {
@@ -133,11 +142,15 @@ public class Game {
                 }
             }
         }
+
+        Profiler.endSection();
     }
 
     private void render(final int delta) {
         GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
+        Profiler.startSection("worldRender");
         state.getWorld().render(state.getOffset());
+        Profiler.endSection();
         try {
             Util.checkGLError();
         } catch(final Exception e) {
@@ -175,6 +188,15 @@ public class Game {
     private void updateFPS() {
         if(getTime() - lastFPS > 1000) {
             logger.config("FPS: " + getState().getFps());
+            logger.config("Updates: " + updates);
+            updates = 0;
+            logger.config("Profiling data:");
+            logger.config("---------------");
+            for(final Entry<String, Long> e : Profiler.getSections().entrySet()) {
+                logger.config(e.getKey() + ": " + TimeUnit.NANOSECONDS.toMillis(e.getValue()) + "ms");
+            }
+            logger.config("---------------");
+            logger.config("");
             state.setFps(0);
             lastFPS += 1000;
         }
@@ -182,7 +204,7 @@ public class Game {
     }
 
     @Value
-    public static final class GameState {
+    public static final class EngineState {
         private final Vec2d offset = new Vec2d(0, 0);
 
         private final String runtimeName;
@@ -195,6 +217,16 @@ public class Game {
         private final int cpuThreads;
         private final boolean isDebuggerAttached;
         private final boolean isRunningFromJar;
+
+        /**
+         * TODO: Mutable?
+         */
+        private final int fpsTarget = 60;
+
+        /**
+         * TODO: Mutable?
+         */
+        private final int tpsTarget = 20;
 
         @NonFinal
         private String glVendor;
@@ -217,9 +249,13 @@ public class Game {
         @NonFinal
         private int fps;
 
+        @Setter(AccessLevel.PRIVATE)
+        @NonFinal
+        private int currentTick;
+
         boolean inTestMode;
 
-        private GameState() {
+        private EngineState() {
             // Tests whether or not we're in JUnit test mode. If we are, some stuff (eg. meshing) is disabled
             inTestMode = Arrays.stream(Thread.currentThread().getStackTrace())
                     .filter(e -> e.getClassName().contains("org.junit")).count() > 0;

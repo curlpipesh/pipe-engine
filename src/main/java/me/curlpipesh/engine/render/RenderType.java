@@ -1,4 +1,4 @@
-package me.curlpipesh.game.render;
+package me.curlpipesh.engine.render;
 
 /**
  * @author audrey

@@ -1,4 +1,4 @@
-package me.curlpipesh.game.util;
+package me.curlpipesh.engine.util;
 
 /**
  * A simple 2-dimensional vector

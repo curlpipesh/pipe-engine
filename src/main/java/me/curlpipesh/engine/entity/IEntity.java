@@ -1,9 +1,8 @@
-package me.curlpipesh.game.entity;
+package me.curlpipesh.engine.entity;
 
-import me.curlpipesh.game.Game;
-import me.curlpipesh.game.Game.GameState;
-import me.curlpipesh.game.util.AxisAlignedBB;
-import me.curlpipesh.game.world.Chunk;
+import me.curlpipesh.engine.Engine.EngineState;
+import me.curlpipesh.engine.util.AxisAlignedBB;
+import me.curlpipesh.engine.world.Chunk;
 
 /**
  * @author audrey
@@ -13,9 +12,9 @@ import me.curlpipesh.game.world.Chunk;
 public interface IEntity {
     AxisAlignedBB getBoundingBox();
 
-    boolean update(GameState state);
+    boolean update(EngineState state);
 
-    default boolean isColliding(final GameState state) {
+    default boolean isColliding(final EngineState state) {
         return Chunk.isSolid(state.getWorld().getTileAtPosition(getBoundingBox().xMin(), getBoundingBox().yMin()))
                 || Chunk.isSolid(state.getWorld().getTileAtPosition(getBoundingBox().xMax(), getBoundingBox().yMax()))
                 || Chunk.isSolid(state.getWorld().getTileAtPosition(getBoundingBox().xMin(), getBoundingBox().yMax()))

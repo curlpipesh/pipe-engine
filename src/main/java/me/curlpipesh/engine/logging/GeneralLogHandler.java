@@ -1,4 +1,4 @@
-package me.curlpipesh.game.logging;
+package me.curlpipesh.engine.logging;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;

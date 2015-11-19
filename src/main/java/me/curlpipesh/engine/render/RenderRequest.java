@@ -1,8 +1,8 @@
-package me.curlpipesh.game.render;
+package me.curlpipesh.engine.render;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import me.curlpipesh.game.util.Vec2d;
+import me.curlpipesh.engine.util.Vec2d;
 
 import java.util.ArrayList;
 import java.util.List;

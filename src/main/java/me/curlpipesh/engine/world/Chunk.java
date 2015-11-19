@@ -1,11 +1,11 @@
-package me.curlpipesh.game.world;
+package me.curlpipesh.engine.world;
 
 import lombok.Getter;
-import me.curlpipesh.game.Game;
-import me.curlpipesh.game.render.RenderRequest;
-import me.curlpipesh.game.render.RenderType;
-import me.curlpipesh.game.util.AxisAlignedBB;
-import me.curlpipesh.game.util.Vec2i;
+import me.curlpipesh.engine.Engine;
+import me.curlpipesh.engine.render.RenderRequest;
+import me.curlpipesh.engine.render.RenderType;
+import me.curlpipesh.engine.util.AxisAlignedBB;
+import me.curlpipesh.engine.util.Vec2i;
 import org.lwjgl.opengl.GL11;
 
 import java.util.concurrent.TimeUnit;
@@ -54,7 +54,7 @@ public class Chunk {
         }
         final long t1 = System.nanoTime();
         final long ms = TimeUnit.NANOSECONDS.toMillis(t1 - t0);
-        Game.getLogger().config(String.format("Chunk %s generation took %dms.", chunkPos.toString(), ms));
+        Engine.getLogger().config(String.format("Chunk %s generation took %dms.", chunkPos.toString(), ms));
     }
 
     public void mesh() {
@@ -91,7 +91,7 @@ public class Chunk {
         chunkRequest.position(chunkPos.x() * SIZE * TILE_SIZE, chunkPos.y() * SIZE * TILE_SIZE).compile();
         debugRequest.position(chunkPos.x() * SIZE * TILE_SIZE, chunkPos.y() * SIZE * TILE_SIZE).compile();
         if(!world.getRenderServer().request(chunkRequest)) {
-            Game.getLogger().severe("[Chunk" + chunkPos + "] Render request rejected!?");
+            Engine.getLogger().severe("[Chunk" + chunkPos + "] Render request rejected!?");
         } else {
             world.getRenderServer().request(debugRequest);
         }
