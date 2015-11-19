@@ -60,13 +60,11 @@ public class Engine {
         Display.setLocation(100, 100);
         DisplayUtil.basicOpenGLInit();
 
-        // Breaking my own rules about accessing stuff like this, I know
-        // TODO: Change that eventually
-        state.glVendor = GL11.glGetString(GL11.GL_VENDOR);
-        state.glRenderer = GL11.glGetString(GL11.GL_RENDERER);
-        state.glVersion = GL11.glGetString(GL11.GL_VERSION);
+        state.setGlVendor(GL11.glGetString(GL11.GL_VENDOR));
+        state.setGlRenderer(GL11.glGetString(GL11.GL_RENDERER));
+        state.setGlVersion(GL11.glGetString(GL11.GL_VERSION));
         // TODO: Check these for something?
-        //state.glExtensions = GL11.glGetString(GL11.GL_EXTENSIONS);
+        state.glExtensions = GL11.glGetString(GL11.GL_EXTENSIONS);
         printTechnicalInfo();
 
         GL11.glEnable(GL11.GL_CULL_FACE);
@@ -105,7 +103,7 @@ public class Engine {
         logger.config("OpenGL Vendor:      " + state.getGlVendor());
         logger.config("OpenGL Renderer:    " + state.getGlRenderer());
         logger.config("OpenGL Version:     " + state.getGlVersion());
-        logger.config("OpenGL Extensions:  " + state.getGlExtensions());
+        //logger.config("OpenGL Extensions:  " + state.getGlExtensions());
     }
 
     private void update(final int delta) {
@@ -223,18 +221,17 @@ public class Engine {
          */
         private final int fpsTarget = 60;
 
-        /**
-         * TODO: Mutable?
-         */
-        private final int tpsTarget = 20;
-
         @NonFinal
+        @Setter(AccessLevel.PRIVATE)
         private String glVendor;
         @NonFinal
+        @Setter(AccessLevel.PRIVATE)
         private String glRenderer;
         @NonFinal
+        @Setter(AccessLevel.PRIVATE)
         private String glVersion;
         @NonFinal
+        @Setter(AccessLevel.PRIVATE)
         private String glExtensions;
 
         @Setter
@@ -245,13 +242,9 @@ public class Engine {
         @NonFinal
         private Player player;
 
-        @Setter(AccessLevel.PRIVATE)
         @NonFinal
+        @Setter(AccessLevel.PRIVATE)
         private int fps;
-
-        @Setter(AccessLevel.PRIVATE)
-        @NonFinal
-        private int currentTick;
 
         boolean inTestMode;
 
