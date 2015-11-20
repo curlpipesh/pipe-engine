@@ -34,6 +34,9 @@ public class RenderRequest {
     @Getter(AccessLevel.PACKAGE)
     private final Vec2d position = new Vec2d(0, 0);
 
+    @Getter(AccessLevel.PACKAGE)
+    private final Vec2d dimensions = new Vec2d(0, 0);
+
     public RenderRequest(final String name, final RenderType type, final int mode) {
         vertices = new ArrayList<>();
         color = 0;
@@ -69,6 +72,12 @@ public class RenderRequest {
     public RenderRequest position(final double x, final double y) {
         position.x(x);
         position.y(y);
+        return this;
+    }
+
+    public RenderRequest dimension(final double w, final double h) {
+        dimensions.x(w);
+        dimensions.y(h);
         return this;
     }
 

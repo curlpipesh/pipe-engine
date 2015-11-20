@@ -7,6 +7,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -14,11 +17,26 @@ import static org.junit.Assert.assertEquals;
  * @since 11/17/15.
  */
 public class ChunkTest {
-    private static final Engine ENGINE = new Engine();
+    private static final Engine ENGINE;
+
+    static {
+        final Constructor<?> c;
+        try {
+            c = Engine.class.getDeclaredConstructor();
+        } catch(final NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+        c.setAccessible(true);
+        try {
+            ENGINE = (Engine) c.newInstance();
+        } catch(InstantiationException | InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Before
     public void before() {
-        ENGINE.getState().setWorld(new World(ENGINE.getState(), "TEST"));
+        ENGINE.getState().setWorld(new World(ENGINE.getState(), "TEST", 4, 4));
         ENGINE.getState().getWorld().loadWorld();
     }
 

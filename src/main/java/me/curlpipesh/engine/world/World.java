@@ -33,9 +33,14 @@ public class World {
     @Getter(AccessLevel.PACKAGE)
     private final Logger logger;
 
-    public World(final EngineState state, final String name) {
+    private final int x;
+    private final int y;
+
+    public World(final EngineState state, final String name, final int x, final int y) {
         this.name = name;
         this.state = state;
+        this.x = x;
+        this.y = y;
         loadedChunks = new LinkedHashSet<>();
         renderServer = new RenderServer(state);
         logger = LoggerFactory.getLogger(state, "World(" + name + ")");
@@ -43,10 +48,11 @@ public class World {
 
     public void loadWorld() {
         final long t0 = System.nanoTime();
-        loadedChunks.add(new Chunk(this, 0, 0));
-        loadedChunks.add(new Chunk(this, 0, 1));
-        loadedChunks.add(new Chunk(this, 1, 1));
-        loadedChunks.add(new Chunk(this, 1, 0));
+        for(int i = 0; i < x; i++) {
+            for(int j = 0; j < y; j++) {
+                loadedChunks.add(new Chunk(this, i, j));
+            }
+        }
         loadedChunks.stream().forEach(Chunk::generate);
         final long t1 = System.nanoTime();
         final long ms = TimeUnit.NANOSECONDS.toMillis(t1 - t0);

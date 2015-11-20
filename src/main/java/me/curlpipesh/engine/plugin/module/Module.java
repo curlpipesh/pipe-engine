@@ -1,6 +1,5 @@
 package me.curlpipesh.engine.plugin.module;
 
-import lombok.NonNull;
 import me.curlpipesh.engine.plugin.Plugin;
 
 /**
@@ -46,7 +45,7 @@ public interface Module {
      *
      * @param status The status to set. May be null
      */
-    void setStatus(@NonNull final String status);
+    void setStatus(final String status);
 
     default boolean isStatusShown() {
         return true;

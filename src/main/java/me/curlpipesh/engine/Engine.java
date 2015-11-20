@@ -8,6 +8,8 @@ import lombok.experimental.NonFinal;
 import me.curlpipesh.engine.logging.GeneralLogHandler;
 import me.curlpipesh.engine.player.Player;
 import me.curlpipesh.engine.profiler.Profiler;
+import me.curlpipesh.engine.profiler.Profiler.Section;
+import me.curlpipesh.engine.render.FontRenderer;
 import me.curlpipesh.engine.util.JavaUtils;
 import me.curlpipesh.engine.util.Vec2d;
 import me.curlpipesh.engine.world.World;
@@ -20,8 +22,6 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.Util;
 
 import java.util.Arrays;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -36,29 +36,31 @@ public class Engine {
     private long lastFrame;
     private long lastFPS;
 
+    private int debugFps = 0;
+
+    /**
+     * We don't use the <tt>LoggerFactory</tt> for this because it's before
+     * everything else is ready, meaning that we don't have a usable
+     * <tt>EngineState</tt> etc.
+     */
     @Getter
     private static final Logger logger;
 
     @Getter
     private final EngineState state = new EngineState();
 
-    public static void main(final String[] args) {
-        instance.run();
-    }
+    private FontRenderer fontRenderer;
 
-    int updates = 0;
-
-    static {
-        logger = Logger.getLogger("Engine");
-        logger.setUseParentHandlers(false);
-        logger.setLevel(instance.getState().isInTestMode() ? Level.INFO : Level.FINEST);
-        logger.addHandler(new GeneralLogHandler());
-    }
+    private Engine() {}
 
     private void run() {
         DisplayUtil.buildDisplay(800, 600);
         Display.setLocation(100, 100);
-        DisplayUtil.basicOpenGLInit();
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glLoadIdentity();
+        GL11.glOrtho(0, Display.getWidth(), 0, Display.getHeight(), 10, -10);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
 
         state.setGlVendor(GL11.glGetString(GL11.GL_VENDOR));
         state.setGlRenderer(GL11.glGetString(GL11.GL_RENDERER));
@@ -67,12 +69,14 @@ public class Engine {
         state.glExtensions = GL11.glGetString(GL11.GL_EXTENSIONS);
         printTechnicalInfo();
 
+        fontRenderer = new FontRenderer();
+
         GL11.glEnable(GL11.GL_CULL_FACE);
         GL11.glCullFace(GL11.GL_BACK);
         GL11.glFrontFace(GL11.GL_CCW);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
 
-        state.setWorld(new World(state, "Test world"));
+        state.setWorld(new World(state, "Test world", 16, 4));
         state.setPlayer(new Player());
         lastFPS = getTime();
         getDelta();
@@ -107,7 +111,6 @@ public class Engine {
     }
 
     private void update(final int delta) {
-        ++updates;
         updateFPS();
         Profiler.startSection("worldUpdate");
         state.getWorld().update(delta);
@@ -148,7 +151,22 @@ public class Engine {
         GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
         Profiler.startSection("worldRender");
         state.getWorld().render(state.getOffset());
+
+        Profiler.endStartSection("profilingData");
+        GL11.glTranslated(0, 0, -1);
+
+        fontRenderer.drawString("FPS: " + debugFps, 2, 2);
+
+        int y = Display.getHeight() - FontRenderer.GLYPH_SIZE - 2;
+        fontRenderer.drawString("Profiling data:", 2, y);
+        fontRenderer.drawString("---------------", 2, y -= FontRenderer.GLYPH_SIZE + 2);
+        for(final Section s : Profiler.getSections()) {
+            fontRenderer.drawString(s.getSection() + ": " + s.getAverageTime() + "ms", 2, y -= FontRenderer.GLYPH_SIZE + 2);
+        }
+
+        GL11.glTranslated(0, 0, 1);
         Profiler.endSection();
+
         try {
             Util.checkGLError();
         } catch(final Exception e) {
@@ -185,28 +203,31 @@ public class Engine {
      */
     private void updateFPS() {
         if(getTime() - lastFPS > 1000) {
-            logger.config("FPS: " + getState().getFps());
-            logger.config("Updates: " + updates);
-            updates = 0;
-            logger.config("Profiling data:");
+            debugFps = state.getFps();
+            /*logger.config("Profiling data:");
             logger.config("---------------");
             for(final Entry<String, Long> e : Profiler.getSections().entrySet()) {
                 logger.config(e.getKey() + ": " + TimeUnit.NANOSECONDS.toMillis(e.getValue()) + "ms");
             }
             logger.config("---------------");
-            logger.config("");
+            logger.config("");*/
             state.setFps(0);
             lastFPS += 1000;
         }
         state.incrementFps();
     }
 
+    /**
+     * TODO: Extract to its own class?
+     */
     @Value
     public static final class EngineState {
+
         private final Vec2d offset = new Vec2d(0, 0);
 
         private final String runtimeName;
         private final String runtimeVersion;
+
         private final String jvmName;
         private final String cpuArch;
         private final String osName;
@@ -215,29 +236,27 @@ public class Engine {
         private final int cpuThreads;
         private final boolean isDebuggerAttached;
         private final boolean isRunningFromJar;
-
         /**
          * TODO: Mutable?
          */
         private final int fpsTarget = 60;
-
         @NonFinal
         @Setter(AccessLevel.PRIVATE)
         private String glVendor;
+
         @NonFinal
         @Setter(AccessLevel.PRIVATE)
         private String glRenderer;
+
         @NonFinal
         @Setter(AccessLevel.PRIVATE)
         private String glVersion;
         @NonFinal
         @Setter(AccessLevel.PRIVATE)
         private String glExtensions;
-
         @Setter
         @NonFinal
         private World world;
-
         @Setter
         @NonFinal
         private Player player;
@@ -246,7 +265,7 @@ public class Engine {
         @Setter(AccessLevel.PRIVATE)
         private int fps;
 
-        boolean inTestMode;
+        private final boolean inTestMode;
 
         private EngineState() {
             // Tests whether or not we're in JUnit test mode. If we are, some stuff (eg. meshing) is disabled
@@ -268,5 +287,16 @@ public class Engine {
         private void incrementFps() {
             ++fps;
         }
+    }
+
+    public static void main(final String[] args) {
+        instance.run();
+    }
+
+    static {
+        logger = Logger.getLogger("Engine");
+        logger.setUseParentHandlers(false);
+        logger.setLevel(instance.getState().isInTestMode() ? Level.INFO : Level.FINEST);
+        logger.addHandler(new GeneralLogHandler());
     }
 }

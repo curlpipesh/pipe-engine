@@ -2,11 +2,13 @@ package me.curlpipesh.engine.render;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 import me.curlpipesh.engine.Engine.EngineState;
 import me.curlpipesh.engine.logging.LoggerFactory;
 import me.curlpipesh.engine.util.Vec2d;
 import me.curlpipesh.gl.tessellation.impl.VAOTessellator;
 import me.curlpipesh.gl.vbo.Vbo;
+import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
@@ -29,6 +31,10 @@ public class RenderServer {
     private final List<Mesh> meshes = new ArrayList<>();
 
     private long lastUpdate = 0;
+
+    @Getter
+    @Setter
+    private int maxNewRenders = 4;
 
     private final Logger logger;
 
@@ -54,7 +60,7 @@ public class RenderServer {
             logger.info("Queuing mesh render '" + request.getName() + "'");
             requests.addLast(request);
         } else if(request.getType() == RenderType.VAO) {
-            logger.info("Handling immediate request '" + request.getName() +"'");
+            logger.info("Handling immediate request '" + request.getName() + "'");
             tess.startDrawing(request.getMode());
             request.getVertices().stream().forEach(v -> tess.color(v.getColor())
                     .addVertex(v.getX(), v.getY(), v.getZ()));
@@ -65,11 +71,13 @@ public class RenderServer {
 
     public void update() {
         final long now = System.nanoTime();
-        if(TimeUnit.NANOSECONDS.toMillis(now - lastUpdate) > 250) {
+        if(TimeUnit.NANOSECONDS.toMillis(now - lastUpdate) > 100) {
             lastUpdate = now;
             if(!requests.isEmpty()) {
-                // Do max 4 new renders
-                for(int i = 0; i < Math.min(4, requests.size()); i++) {
+                if(requests.size() > maxNewRenders * maxNewRenders) {
+                    ++maxNewRenders;
+                }
+                for(int i = 0; i < Math.min(maxNewRenders, requests.size()); i++) {
                     final RenderRequest request = requests.poll();
                     if(request != null) {
                         if(request.getType() == RenderType.VBO) {
@@ -79,7 +87,7 @@ public class RenderServer {
                                 vbo.color(v.getColor()).vertex(v.getX(), v.getY(), v.getZ());
                             }
                             vbo.compile();
-                            final Mesh mesh = new Mesh(request.getName(), vbo, request.getPosition());
+                            final Mesh mesh = new Mesh(request.getName(), vbo, request.getPosition(), request.getDimensions());
                             if(meshes.stream().filter(m -> m.getName().equals(request.getName())).count() > 0) {
                                 // Delete old VBO
                                 final List<Mesh> deletes = new ArrayList<>();
@@ -111,18 +119,17 @@ public class RenderServer {
 
         //for(final Mesh mesh : meshes) {
         for(int i = meshes.size() - 1; i >= 0; i--) {
+            // TODO: Check for off-screen
             final Mesh mesh = meshes.get(i);
-            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
-            GL11.glPushMatrix();
-            GL11.glTranslated(mesh.getPosition().x() - renderOffset.x(),
-                    mesh.getPosition().y() - renderOffset.y(),
-                    0);
-            mesh.getVbo().render();
-            GL11.glTranslated(-(mesh.getPosition().x() - renderOffset.x()),
-                    -(mesh.getPosition().y() - renderOffset.y()),
-                    0);
-            GL11.glPopMatrix();
-            GL11.glPopAttrib();
+            final double xPos = mesh.getPosition().x() - renderOffset.x();
+            final double yPos = mesh.getPosition().y() - renderOffset.y();
+
+            if((xPos < Display.getWidth() && yPos < Display.getHeight())
+                    || (xPos + mesh.getDimensions().x() > 0 && yPos + mesh.getDimensions().y() > 0)) {
+                GL11.glTranslated(xPos, yPos, 0);
+                mesh.getVbo().render();
+                GL11.glTranslated(-xPos, -yPos, 0);
+            }
         }
     }
 
@@ -133,11 +140,14 @@ public class RenderServer {
         private final Vbo vbo;
         @Getter(AccessLevel.PRIVATE)
         private final Vec2d position;
+        @Getter(AccessLevel.PRIVATE)
+        private final Vec2d dimensions;
 
-        Mesh(final String name, final Vbo vbo, final Vec2d position) {
+        Mesh(final String name, final Vbo vbo, final Vec2d position, final Vec2d dimensions) {
             this.name = name;
             this.vbo = vbo;
             this.position = position;
+            this.dimensions = dimensions;
         }
     }
 }
