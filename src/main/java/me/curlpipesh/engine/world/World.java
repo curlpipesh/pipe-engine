@@ -9,6 +9,7 @@ import me.curlpipesh.engine.render.RenderServer;
 import me.curlpipesh.engine.util.Vec2f;
 
 import java.util.LinkedHashSet;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -36,11 +37,19 @@ public class World {
     private final int x;
     private final int y;
 
-    public World(final EngineState state, final String name, final int x, final int y) {
+    @Getter(AccessLevel.PACKAGE)
+    private final long seed;
+
+    @Getter(AccessLevel.PACKAGE)
+    private final Random rng;
+
+    public World(final EngineState state, final String name, final long seed, final int x, final int y) {
         this.name = name;
         this.state = state;
+        this.seed = seed;
         this.x = x;
         this.y = y;
+        rng = new Random(seed);
         loadedChunks = new LinkedHashSet<>();
         renderServer = new RenderServer(state);
         logger = LoggerFactory.getLogger(state, "World(" + name + ")");

@@ -37,7 +37,7 @@ public class ChunkTest {
 
     @Before
     public void before() {
-        ENGINE.getState().setWorld(new World(ENGINE.getState(), "TEST", 4, 4));
+        ENGINE.getState().setWorld(new World(ENGINE.getState(), "TEST", 0xDEADBEEF, 4, 4));
         ENGINE.getState().getWorld().loadWorld();
     }
 

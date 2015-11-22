@@ -50,6 +50,7 @@ public class Engine {
     @Getter
     private final EngineState state = new EngineState();
 
+    // TODO: Move into state?
     private FontRenderer fontRenderer;
 
     private Engine() {}
@@ -77,7 +78,7 @@ public class Engine {
         GL11.glFrontFace(GL11.GL_CW);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
 
-        state.setWorld(new World(state, "Test world", 16, 4));
+        state.setWorld(new World(state, "Test world", 0xDEADBEEFBABEL, 16, 4));
         state.setPlayer(new Player());
         state.getPlayer().getBoundingBox().getPosition().x((Display.getWidth() / 2) - (Chunk.TILE_SIZE / 2));
         state.getPlayer().getBoundingBox().getPosition().y((Display.getHeight() / 2) - (Chunk.TILE_SIZE / 2));

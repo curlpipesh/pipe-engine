@@ -5,6 +5,7 @@ import me.curlpipesh.engine.Engine;
 import me.curlpipesh.engine.render.RenderRequest;
 import me.curlpipesh.engine.render.RenderType;
 import me.curlpipesh.engine.util.AxisAlignedBB;
+import me.curlpipesh.engine.util.Noise;
 import me.curlpipesh.engine.util.Vec2i;
 import org.lwjgl.opengl.GL11;
 
@@ -36,21 +37,39 @@ public class Chunk {
 
     @SuppressWarnings("FieldCanBeLocal")
     private final World world;
-    
+
     public Chunk(final World world, final int chunkX, final int chunkY) {
         this.world = world;
         chunkPos = new Vec2i(chunkX, chunkY);
-        tiles = new long[32][32];
+        tiles = new long[SIZE][SIZE];
         bb = new AxisAlignedBB(chunkX * SIZE * TILE_SIZE, chunkY * SIZE * TILE_SIZE, SIZE * TILE_SIZE, SIZE * TILE_SIZE);
     }
 
     public void generate() {
         final long t0 = System.nanoTime();
-        for(int i = 0; i < SIZE; i++) {
-            for(int j = 0; j < SIZE; j++) {
-                // > 16 ? green : grey
-                //tiles[i][j] = j > SIZE / 2 ? 0xFF0200FFFF337733L : 0xFF0100FFFF777777L;
-                tiles[i][j] = 0xFF0100FFFF777777L;
+        if(chunkPos.y() == 3) {
+            for(int i = 0; i < SIZE; i++) {
+                final int maxY = (int) (SIZE * Math.min(Math.abs(Math.min(Noise.noise(world.getRng().nextDouble()) * 2, 1)), 0.25 * world.getRng().nextDouble()));
+                for(int j = 0; j < SIZE; j++) {
+                    // > 16 ? green : grey
+                    //tiles[i][j] = j > SIZE / 2 ? 0xFF0200FFFF337733L : 0xFF0100FFFF777777L;
+                    if(j < maxY) {
+                        final long solid = 0xFF;
+                        final long type = j == maxY - 1 ? 0x02 : j >= maxY - 4 ? 0x03 : 0x01;
+                        final long active = 0xFF;
+                        final long color = type == 0x01 ? 0xFF777777 : type == 0x02 ? 0xFF337733 : 0xFF846E00;
+                        tiles[i][j] = (solid << 56) | (type << 48) | (active << 32) | color;
+                    } else {
+                        tiles[i][j] = 0;
+                    }
+                }
+            }
+        } else {
+            for(int i = 0; i < SIZE; i++) {
+                for(int j = 0; j < SIZE; j++) {
+                    // Generic stone tile
+                    tiles[i][j] = 0xFF0100FFFF777777L;
+                }
             }
         }
         final long t1 = System.nanoTime();
