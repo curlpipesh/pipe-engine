@@ -49,7 +49,8 @@ public class Chunk {
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
                 // > 16 ? green : grey
-                tiles[i][j] = j > SIZE / 2 ? 0xFF0200FFFF337733L : 0xFF0100FFFF777777L;
+                //tiles[i][j] = j > SIZE / 2 ? 0xFF0200FFFF337733L : 0xFF0100FFFF777777L;
+                tiles[i][j] = 0xFF0100FFFF777777L;
             }
         }
         final long t1 = System.nanoTime();
@@ -68,23 +69,23 @@ public class Chunk {
             for(int j = 0; j < SIZE; j++) {
                 if(isActive(tiles[i][j])) {
                     chunkRequest.color(getColor(tiles[i][j]))
-                            .vertex((i * TILE_SIZE), (j * TILE_SIZE), 0)
-                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE), 0)
-                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE) + TILE_SIZE, 0)
-                            .vertex((i * TILE_SIZE), (j * TILE_SIZE) + TILE_SIZE, 0);
+                            .vertex((i * TILE_SIZE), (j * TILE_SIZE), 1)
+                            .vertex((i * TILE_SIZE), (j * TILE_SIZE) + TILE_SIZE, 1)
+                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE) + TILE_SIZE, 1)
+                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE), 1);
 
                     debugRequest.color(isActive(tiles[i][j]) ? 0xFF00FF00 : 0xFFFF0000)
                             // tldr: negative Z axis renders closer to the near plane, which
                             // makes it render towards the top. Way counter-intuitive
-                            .vertex((i * TILE_SIZE), (j * TILE_SIZE), 0)
-                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE), 0)
-                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE) + TILE_SIZE, 0)
-                            .vertex((i * TILE_SIZE), (j * TILE_SIZE) + TILE_SIZE, 0)
+                            .vertex((i * TILE_SIZE), (j * TILE_SIZE), 0.99F)
+                            .vertex((i * TILE_SIZE), (j * TILE_SIZE) + TILE_SIZE, 0.99F)
+                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE) + TILE_SIZE, 0.99F)
+                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE), 0.99F)
 
-                            .vertex((i * TILE_SIZE), (j * TILE_SIZE), 0)
-                            .vertex((i * TILE_SIZE), (j * TILE_SIZE) + TILE_SIZE, 0)
-                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE) + TILE_SIZE, 0)
-                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE), 0);
+                            .vertex((i * TILE_SIZE), (j * TILE_SIZE), 0.99F)
+                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE), 0.99F)
+                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE) + TILE_SIZE, 0.99F)
+                            .vertex((i * TILE_SIZE), (j * TILE_SIZE) + TILE_SIZE, 0.99F);
                 }
             }
         }

@@ -6,6 +6,8 @@ import me.curlpipesh.gl.texture.TextureLoader;
 import org.lwjgl.opengl.GL11;
 
 /**
+ * TODO: Use RenderRequests
+ *
  * @author audrey
  * @since 11/19/15.
  */
@@ -61,9 +63,9 @@ public class FontRenderer {
 
         tess.startDrawing(GL11.GL_QUADS)
                 .addVertexWithUV(x,              y,              0, xIndex,                 yIndex + GLYPH_UV_SIZE)
-                .addVertexWithUV(x + GLYPH_SIZE, y,              0, xIndex + GLYPH_UV_SIZE, yIndex + GLYPH_UV_SIZE)
-                .addVertexWithUV(x + GLYPH_SIZE, y + GLYPH_SIZE, 0, xIndex + GLYPH_UV_SIZE, yIndex)
                 .addVertexWithUV(x,              y + GLYPH_SIZE, 0, xIndex,                 yIndex)
+                .addVertexWithUV(x + GLYPH_SIZE, y + GLYPH_SIZE, 0, xIndex + GLYPH_UV_SIZE, yIndex)
+                .addVertexWithUV(x + GLYPH_SIZE, y,              0, xIndex + GLYPH_UV_SIZE, yIndex + GLYPH_UV_SIZE)
         .bindAndDraw();
     }
 }

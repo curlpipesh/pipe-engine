@@ -7,11 +7,11 @@ package me.curlpipesh.engine.util;
  * @since 5/21/15
  */
 @SuppressWarnings("unused")
-public class Vec2d {
+public class Vec2f {
     /**
      * x- and y- coordinates of the vector
      */
-    private double x, y;
+    private float x, y;
 
     /**
      * Creates a new vector with the supplied x- and y- coordinates.
@@ -19,7 +19,7 @@ public class Vec2d {
      * @param x The x-coordinate
      * @param y The y-coordinate
      */
-    public Vec2d(final double x, final double y) {
+    public Vec2f(final float x, final float y) {
         this.x = x;
         this.y = y;
     }
@@ -30,7 +30,7 @@ public class Vec2d {
      * @param v The vector to add
      * @return Itself
      */
-    public Vec2d add(final Vec2d v) {
+    public Vec2f add(final Vec2f v) {
         x += v.x;
         y += v.y;
         return this;
@@ -42,7 +42,7 @@ public class Vec2d {
      * @param v The vector to subtract
      * @return Itself
      */
-    public Vec2d sub(final Vec2d v) {
+    public Vec2f sub(final Vec2f v) {
         x -= v.x;
         y -= v.y;
         return this;
@@ -54,7 +54,7 @@ public class Vec2d {
      * @param v The vector to multiply by
      * @return Itself
      */
-    public Vec2d mul(final Vec2d v) {
+    public Vec2f mul(final Vec2f v) {
         x *= v.x;
         y *= v.y;
         return this;
@@ -66,7 +66,7 @@ public class Vec2d {
      * @param v The vector to divide by
      * @return Itself
      */
-    public Vec2d div(final Vec2d v) {
+    public Vec2f div(final Vec2f v) {
         x /= v.x;
         y /= v.y;
         return this;
@@ -78,7 +78,7 @@ public class Vec2d {
      * @param v The vector to get the distance to
      * @return The distance from this vector to the supplied vector
      */
-    public double dist(final Vec2d v) {
+    public double dist(final Vec2f v) {
         return Math.sqrt(x*v.x+y*v.y);
     }
 
@@ -88,7 +88,7 @@ public class Vec2d {
      * @param v The vector to do the dot product with
      * @return The dot product
      */
-    public double dot(final Vec2d v) {
+    public float dot(final Vec2f v) {
         return x*v.x + y*v.y;
     }
 
@@ -98,7 +98,7 @@ public class Vec2d {
      * @param v The vector to do the cross product with
      * @return The cross product
      */
-    public double cross(final Vec2d v) {
+    public float cross(final Vec2f v) {
         return x*v.y - y*v.x;
     }
 
@@ -108,7 +108,7 @@ public class Vec2d {
      * @param x The amount to add
      * @return Itself
      */
-    public Vec2d addX(final double x) {
+    public Vec2f addX(final float x) {
         this.x += x;
         return this;
     }
@@ -119,7 +119,7 @@ public class Vec2d {
      * @param y The amount to add
      * @return Itself
      */
-    public Vec2d addY(final double y) {
+    public Vec2f addY(final float y) {
         this.y += y;
         return this;
     }
@@ -131,7 +131,7 @@ public class Vec2d {
      * @param v The vector to "clone"
      * @return Itself
      */
-    public Vec2d set(final Vec2d v) {
+    public Vec2f set(final Vec2f v) {
         x = v.x;
         y = v.y;
         return this;
@@ -142,7 +142,7 @@ public class Vec2d {
      *
      * @return The x-coordinate
      */
-    public double x() {
+    public float x() {
         return x;
     }
 
@@ -151,7 +151,7 @@ public class Vec2d {
      *
      * @return The y-coordinate
      */
-    public double y() {
+    public float y() {
         return y;
     }
 
@@ -160,7 +160,7 @@ public class Vec2d {
      *
      * @param x The new x-coordinate
      */
-    public void x(final double x) {
+    public void x(final float x) {
         this.x = x;
     }
 
@@ -169,7 +169,7 @@ public class Vec2d {
      *
      * @param y The new y-coordinate
      */
-    public void y(final double y) {
+    public void y(final float y) {
         this.y = y;
     }
 

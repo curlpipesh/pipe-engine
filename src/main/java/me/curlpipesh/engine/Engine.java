@@ -5,13 +5,14 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
 import lombok.experimental.NonFinal;
+import me.curlpipesh.engine.entity.player.Player;
 import me.curlpipesh.engine.logging.GeneralLogHandler;
-import me.curlpipesh.engine.player.Player;
 import me.curlpipesh.engine.profiler.Profiler;
 import me.curlpipesh.engine.profiler.Profiler.Section;
 import me.curlpipesh.engine.render.FontRenderer;
 import me.curlpipesh.engine.util.JavaUtils;
-import me.curlpipesh.engine.util.Vec2d;
+import me.curlpipesh.engine.util.Vec2f;
+import me.curlpipesh.engine.world.Chunk;
 import me.curlpipesh.engine.world.World;
 import me.curlpipesh.gl.util.DisplayUtil;
 import org.lwjgl.Sys;
@@ -73,11 +74,15 @@ public class Engine {
 
         GL11.glEnable(GL11.GL_CULL_FACE);
         GL11.glCullFace(GL11.GL_BACK);
-        GL11.glFrontFace(GL11.GL_CCW);
+        GL11.glFrontFace(GL11.GL_CW);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
 
         state.setWorld(new World(state, "Test world", 16, 4));
         state.setPlayer(new Player());
+        state.getPlayer().getBoundingBox().getPosition().x((Display.getWidth() / 2) - (Chunk.TILE_SIZE / 2));
+        state.getPlayer().getBoundingBox().getPosition().y((Display.getHeight() / 2) - (Chunk.TILE_SIZE / 2));
+        state.getPlayer().getBoundingBox().getDimensions().y(Chunk.TILE_SIZE);
+        state.getPlayer().getBoundingBox().getDimensions().y(Chunk.TILE_SIZE);
         lastFPS = getTime();
         getDelta();
         state.getWorld().loadWorld();
@@ -112,13 +117,12 @@ public class Engine {
 
     private void update(final int delta) {
         updateFPS();
-        Profiler.startSection("worldUpdate");
-        state.getWorld().update(delta);
-        Profiler.endStartSection("input");
+        Profiler.startSection("input");
 
         if(Display.isActive()) {
             // 4 * ratio based off of 60 FPS
-            final double offsetAmount = 4D * ((double) delta / 16.67D);
+            // TODO: Prevent movement if player would intersect with solid tile
+            final float offsetAmount = 4F * ((float) delta / 16.67F);
             if(Keyboard.isKeyDown(Keyboard.KEY_UP)) {
                 state.getOffset().addY(offsetAmount);
             }
@@ -144,6 +148,10 @@ public class Engine {
             }
         }
 
+        Profiler.endStartSection("worldUpdate");
+        state.getWorld().update(delta);
+        // TODO: Move to World methods
+        state.getPlayer().update(state);
         Profiler.endSection();
     }
 
@@ -151,9 +159,12 @@ public class Engine {
         GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
         Profiler.startSection("worldRender");
         state.getWorld().render(state.getOffset());
+        // TODO: Move to World methods
+        state.getWorld().getRenderServer().request(state.getPlayer().render(state.getOffset()));
 
         Profiler.endStartSection("profilingData");
         GL11.glTranslated(0, 0, -1);
+
 
         fontRenderer.drawString("FPS: " + debugFps, 2, 2);
 
@@ -163,6 +174,13 @@ public class Engine {
         for(final Section s : Profiler.getSections()) {
             fontRenderer.drawString(s.getSection() + ": " + s.getAverageTime() + "ms", 2, y -= FontRenderer.GLYPH_SIZE + 2);
         }
+        fontRenderer.drawString("World meshes: " + state.getWorld().getRenderServer().getMeshes().size(), 2, y -= FontRenderer.GLYPH_SIZE + 2);
+        //noinspection UnusedAssignment
+        fontRenderer.drawString(
+                String.format("Player: (%.2f, %.2f)<%.2f, %.2f>",
+                        state.getPlayer().getBoundingBox().xMin(), state.getPlayer().getBoundingBox().yMin(),
+                        state.getPlayer().getBoundingBox().xMax(), state.getPlayer().getBoundingBox().yMax()),
+                2, y -= FontRenderer.GLYPH_SIZE + 2);
 
         GL11.glTranslated(0, 0, 1);
         Profiler.endSection();
@@ -204,14 +222,8 @@ public class Engine {
     private void updateFPS() {
         if(getTime() - lastFPS > 1000) {
             debugFps = state.getFps();
-            /*logger.config("Profiling data:");
-            logger.config("---------------");
-            for(final Entry<String, Long> e : Profiler.getSections().entrySet()) {
-                logger.config(e.getKey() + ": " + TimeUnit.NANOSECONDS.toMillis(e.getValue()) + "ms");
-            }
-            logger.config("---------------");
-            logger.config("");*/
             state.setFps(0);
+            state.setVaos(0);
             lastFPS += 1000;
         }
         state.incrementFps();
@@ -223,11 +235,10 @@ public class Engine {
     @Value
     public static final class EngineState {
 
-        private final Vec2d offset = new Vec2d(0, 0);
+        private final Vec2f offset = new Vec2f(0, 0);
 
         private final String runtimeName;
         private final String runtimeVersion;
-
         private final String jvmName;
         private final String cpuArch;
         private final String osName;
@@ -236,27 +247,20 @@ public class Engine {
         private final int cpuThreads;
         private final boolean isDebuggerAttached;
         private final boolean isRunningFromJar;
+
         /**
          * TODO: Mutable?
          */
         private final int fpsTarget = 60;
-        @NonFinal
-        @Setter(AccessLevel.PRIVATE)
-        private String glVendor;
 
         @NonFinal
         @Setter(AccessLevel.PRIVATE)
-        private String glRenderer;
+        private String glVendor, glRenderer, glVersion, glExtensions;
 
-        @NonFinal
-        @Setter(AccessLevel.PRIVATE)
-        private String glVersion;
-        @NonFinal
-        @Setter(AccessLevel.PRIVATE)
-        private String glExtensions;
         @Setter
         @NonFinal
         private World world;
+
         @Setter
         @NonFinal
         private Player player;
@@ -264,6 +268,12 @@ public class Engine {
         @NonFinal
         @Setter(AccessLevel.PRIVATE)
         private int fps;
+
+        @SuppressWarnings("FieldMayBeFinal")
+        @NonFinal
+        @Getter
+        @Setter
+        private int vaos = 0;
 
         private final boolean inTestMode;
 

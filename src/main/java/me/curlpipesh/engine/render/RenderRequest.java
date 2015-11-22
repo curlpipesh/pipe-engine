@@ -2,7 +2,7 @@ package me.curlpipesh.engine.render;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import me.curlpipesh.engine.util.Vec2d;
+import me.curlpipesh.engine.util.Vec2f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,10 +32,10 @@ public class RenderRequest {
     private boolean compiled = false;
 
     @Getter(AccessLevel.PACKAGE)
-    private final Vec2d position = new Vec2d(0, 0);
+    private final Vec2f position = new Vec2f(0, 0);
 
     @Getter(AccessLevel.PACKAGE)
-    private final Vec2d dimensions = new Vec2d(0, 0);
+    private final Vec2f dimensions = new Vec2f(0, 0);
 
     public RenderRequest(final String name, final RenderType type, final int mode) {
         vertices = new ArrayList<>();
@@ -69,19 +69,20 @@ public class RenderRequest {
         return this;
     }
 
-    public RenderRequest position(final double x, final double y) {
+    public RenderRequest position(final float x, final float y) {
         position.x(x);
         position.y(y);
         return this;
     }
 
-    public RenderRequest dimension(final double w, final double h) {
+    public RenderRequest dimension(final float w, final float h) {
         dimensions.x(w);
         dimensions.y(h);
         return this;
     }
 
-    public void compile() {
+    public RenderRequest compile() {
         compiled = true;
+        return this;
     }
 }

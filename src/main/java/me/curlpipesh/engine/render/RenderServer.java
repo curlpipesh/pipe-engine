@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import me.curlpipesh.engine.Engine.EngineState;
 import me.curlpipesh.engine.logging.LoggerFactory;
-import me.curlpipesh.engine.util.Vec2d;
+import me.curlpipesh.engine.util.Vec2f;
 import me.curlpipesh.gl.tessellation.impl.VAOTessellator;
 import me.curlpipesh.gl.vbo.Vbo;
 import org.lwjgl.opengl.Display;
@@ -28,6 +28,8 @@ public class RenderServer {
     private final LinkedList<RenderRequest> requests;
 
     private final VAOTessellator tess = new VAOTessellator(0xFFFF);
+
+    @Getter
     private final List<Mesh> meshes = new ArrayList<>();
 
     private long lastUpdate = 0;
@@ -57,14 +59,28 @@ public class RenderServer {
             return false;
         }
         if(request.getType() == RenderType.VBO) {
-            logger.info("Queuing mesh render '" + request.getName() + "'");
+            //logger.info("Queuing mesh render '" + request.getName() + "'");
             requests.addLast(request);
         } else if(request.getType() == RenderType.VAO) {
-            logger.info("Handling immediate request '" + request.getName() + "'");
+            //logger.info("Handling immediate request '" + request.getName() + "'");
+            state.setVaos(state.getVaos() + 1);
+
+            GL11.glTranslated(state.getOffset().x() + request.getPosition().x(),
+                    state.getOffset().y() + request.getPosition().y(),
+                    0);
+
             tess.startDrawing(request.getMode());
-            request.getVertices().stream().forEach(v -> tess.color(v.getColor())
-                    .addVertex(v.getX(), v.getY(), v.getZ()));
+            /*request.getVertices().stream().forEach(v -> tess.color(v.getColor())
+                    .addVertex(v.getX(), v.getY(), v.getZ()));*/
+            for(final Vertex v : request.getVertices()) {
+                tess.color(v.getColor())
+                        .addVertex(v.getX(), v.getY(), v.getZ());
+            }
             tess.bindAndDraw();
+
+            GL11.glTranslated(-(state.getOffset().x() + request.getPosition().x()),
+                    -(state.getOffset().y() + request.getPosition().y()),
+                    0);
         }
         return true;
     }
@@ -81,7 +97,7 @@ public class RenderServer {
                     final RenderRequest request = requests.poll();
                     if(request != null) {
                         if(request.getType() == RenderType.VBO) {
-                            logger.info("Rendering mesh '" + request.getName() + "'");
+                            //logger.info("Rendering mesh '" + request.getName() + "'");
                             final Vbo vbo = new Vbo(request.getMode());
                             for(final Vertex v : request.getVertices()) {
                                 vbo.color(v.getColor()).vertex(v.getX(), v.getY(), v.getZ());
@@ -100,27 +116,24 @@ public class RenderServer {
                             meshes.add(mesh);
                         } else {
                             logger.warning("Was asked to render '" + request.getName() + "'[" + request.getType() + "], but it isn't a VBO!");
-                            --i;
                         }
                     } else {
                         logger.severe("Got a null render request!?");
-                        --i;
                     }
                 }
             }
         }
     }
 
-    public void render(final Vec2d renderOffset) {
+    public void render(final Vec2f renderOffset) {
         // For some reason these need to be rendered backwards. idfk.
         // Example is chunk mesh renders
         // Requesting renders as in the order of [chunk, debug] seems to be
         // rendering as [debug, chunk]
 
-        //for(final Mesh mesh : meshes) {
-        for(int i = meshes.size() - 1; i >= 0; i--) {
-            // TODO: Check for off-screen
-            final Mesh mesh = meshes.get(i);
+        for(final Mesh mesh : meshes) {
+        //for(int i = meshes.size() - 1; i >= 0; i--) {
+            //final Mesh mesh = meshes.get(i);
             final double xPos = mesh.getPosition().x() - renderOffset.x();
             final double yPos = mesh.getPosition().y() - renderOffset.y();
 
@@ -139,11 +152,11 @@ public class RenderServer {
         @Getter(AccessLevel.PRIVATE)
         private final Vbo vbo;
         @Getter(AccessLevel.PRIVATE)
-        private final Vec2d position;
+        private final Vec2f position;
         @Getter(AccessLevel.PRIVATE)
-        private final Vec2d dimensions;
+        private final Vec2f dimensions;
 
-        Mesh(final String name, final Vbo vbo, final Vec2d position, final Vec2d dimensions) {
+        private Mesh(final String name, final Vbo vbo, final Vec2f position, final Vec2f dimensions) {
             this.name = name;
             this.vbo = vbo;
             this.position = position;

@@ -1,45 +1,47 @@
 package me.curlpipesh.engine.util;
 
 import lombok.Getter;
+import lombok.Setter;
 import me.curlpipesh.engine.world.Chunk;
 
 /**
  * @author audrey
  * @since 11/12/15.
  */
+@SuppressWarnings("unused")
 public final class AxisAlignedBB {
     @Getter
-    private final Vec2d position;
+    private final Vec2f position;
 
     @Getter
-    private final Vec2d dimensions;
+    private final Vec2f dimensions;
 
     public AxisAlignedBB() {
         this(0, 0);
     }
 
-    public AxisAlignedBB(final double x, final double y) {
+    public AxisAlignedBB(final float x, final float y) {
         this(x, y, Chunk.TILE_SIZE, Chunk.TILE_SIZE);
     }
 
-    public AxisAlignedBB(final double x, final double y, final double w, final double h) {
-        position = new Vec2d(x, y);
-        dimensions = new Vec2d(w, h);
+    public AxisAlignedBB(final float x, final float y, final float w, final float h) {
+        position = new Vec2f(x, y);
+        dimensions = new Vec2f(w, h);
     }
 
-    public double xMin() {
+    public float xMin() {
         return position.x();
     }
 
-    public double yMin() {
+    public float yMin() {
         return position.y();
     }
 
-    public double xMax() {
+    public float xMax() {
         return position.x() + dimensions.x();
     }
 
-    public double yMax() {
+    public float yMax() {
         return position.y() + dimensions.y();
     }
 

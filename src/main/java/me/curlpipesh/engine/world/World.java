@@ -6,7 +6,7 @@ import me.curlpipesh.engine.Engine;
 import me.curlpipesh.engine.Engine.EngineState;
 import me.curlpipesh.engine.logging.LoggerFactory;
 import me.curlpipesh.engine.render.RenderServer;
-import me.curlpipesh.engine.util.Vec2d;
+import me.curlpipesh.engine.util.Vec2f;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -116,7 +116,7 @@ public class World {
         renderServer.update();
     }
 
-    public void render(final Vec2d renderOffset) {
+    public void render(final Vec2f renderOffset) {
         renderServer.render(renderOffset);
     }
 }
