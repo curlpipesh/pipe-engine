@@ -3,7 +3,7 @@ package me.curlpipesh.engine.render;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import me.curlpipesh.engine.Engine.EngineState;
+import me.curlpipesh.engine.EngineState;
 import me.curlpipesh.engine.logging.LoggerFactory;
 import me.curlpipesh.engine.util.Vec2f;
 import me.curlpipesh.gl.tessellation.impl.VAOTessellator;
@@ -17,8 +17,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
- * TODO: RenderServerPool? qq
- *
  * @author audrey
  * @since 11/17/15.
  */
@@ -59,28 +57,26 @@ public class RenderServer {
             return false;
         }
         if(request.getType() == RenderType.VBO) {
-            //logger.info("Queuing mesh render '" + request.getName() + "'");
             requests.addLast(request);
         } else if(request.getType() == RenderType.VAO) {
-            //logger.info("Handling immediate request '" + request.getName() + "'");
             state.setVaos(state.getVaos() + 1);
 
-            GL11.glTranslated(state.getOffset().x() + request.getPosition().x(),
-                    state.getOffset().y() + request.getPosition().y(),
-                    0);
+            if(!request.isPositionAbsolute()) {
+                GL11.glTranslated(state.getOffset().x() + request.getPosition().x(),
+                        state.getOffset().y() + request.getPosition().y(),
+                        0);
+            }
 
             tess.startDrawing(request.getMode());
-            /*request.getVertices().stream().forEach(v -> tess.color(v.getColor())
-                    .addVertex(v.getX(), v.getY(), v.getZ()));*/
-            for(final Vertex v : request.getVertices()) {
-                tess.color(v.getColor())
-                        .addVertex(v.getX(), v.getY(), v.getZ());
-            }
+            request.getVertices().stream().forEach(v -> tess.color(v.getColor())
+                    .addVertexWithUV(v.getX(), v.getY(), v.getZ(), v.getU(), v.getV()));
             tess.bindAndDraw();
 
-            GL11.glTranslated(-(state.getOffset().x() + request.getPosition().x()),
-                    -(state.getOffset().y() + request.getPosition().y()),
-                    0);
+            if(!request.isPositionAbsolute()) {
+                GL11.glTranslated(-(state.getOffset().x() + request.getPosition().x()),
+                        -(state.getOffset().y() + request.getPosition().y()),
+                        0);
+            }
         }
         return true;
     }
@@ -132,7 +128,7 @@ public class RenderServer {
         // rendering as [debug, chunk]
 
         for(final Mesh mesh : meshes) {
-        //for(int i = meshes.size() - 1; i >= 0; i--) {
+            //for(int i = meshes.size() - 1; i >= 0; i--) {
             //final Mesh mesh = meshes.get(i);
             final double xPos = mesh.getPosition().x() - renderOffset.x();
             final double yPos = mesh.getPosition().y() - renderOffset.y();

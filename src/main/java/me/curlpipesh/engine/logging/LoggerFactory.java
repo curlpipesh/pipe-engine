@@ -1,6 +1,6 @@
 package me.curlpipesh.engine.logging;
 
-import me.curlpipesh.engine.Engine.EngineState;
+import me.curlpipesh.engine.EngineState;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

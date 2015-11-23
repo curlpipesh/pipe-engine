@@ -112,10 +112,10 @@ public class Chunk {
                 .dimension(SIZE * TILE_SIZE, SIZE * TILE_SIZE).compile();
         debugRequest.position(chunkPos.x() * SIZE * TILE_SIZE, chunkPos.y() * SIZE * TILE_SIZE)
                 .dimension(SIZE * TILE_SIZE, SIZE * TILE_SIZE).compile();
-        if(!world.getRenderServer().request(chunkRequest)) {
+        if(!world.getState().getRenderServer().request(chunkRequest)) {
             Engine.getLogger().severe("[Chunk" + chunkPos + "] Render request rejected!?");
         } else {
-            world.getRenderServer().request(debugRequest);
+            world.getState().getRenderServer().request(debugRequest);
         }
     }
 

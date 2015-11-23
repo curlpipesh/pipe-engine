@@ -1,17 +1,11 @@
 package me.curlpipesh.engine;
 
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
-import lombok.Value;
-import lombok.experimental.NonFinal;
 import me.curlpipesh.engine.entity.player.Player;
 import me.curlpipesh.engine.logging.GeneralLogHandler;
 import me.curlpipesh.engine.profiler.Profiler;
 import me.curlpipesh.engine.profiler.Profiler.Section;
 import me.curlpipesh.engine.render.FontRenderer;
-import me.curlpipesh.engine.util.JavaUtils;
-import me.curlpipesh.engine.util.Vec2f;
 import me.curlpipesh.engine.world.Chunk;
 import me.curlpipesh.engine.world.World;
 import me.curlpipesh.gl.util.DisplayUtil;
@@ -22,7 +16,6 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.Util;
 
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -48,10 +41,7 @@ public class Engine {
     private static final Logger logger;
 
     @Getter
-    private final EngineState state = new EngineState();
-
-    // TODO: Move into state?
-    private FontRenderer fontRenderer;
+    private EngineState state;
 
     private Engine() {}
 
@@ -64,14 +54,15 @@ public class Engine {
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
 
+        state = new EngineState();
+
+        logger.setLevel(instance.getState().isInTestMode() ? Level.INFO : Level.FINEST);
+
         state.setGlVendor(GL11.glGetString(GL11.GL_VENDOR));
         state.setGlRenderer(GL11.glGetString(GL11.GL_RENDERER));
         state.setGlVersion(GL11.glGetString(GL11.GL_VERSION));
-        // TODO: Check these for something?
-        state.glExtensions = GL11.glGetString(GL11.GL_EXTENSIONS);
+        state.setGlExtensions(GL11.glGetString(GL11.GL_EXTENSIONS));
         printTechnicalInfo();
-
-        fontRenderer = new FontRenderer();
 
         GL11.glEnable(GL11.GL_CULL_FACE);
         GL11.glCullFace(GL11.GL_BACK);
@@ -151,8 +142,7 @@ public class Engine {
 
         Profiler.endStartSection("worldUpdate");
         state.getWorld().update(delta);
-        // TODO: Move to World methods
-        state.getPlayer().update(state);
+        //state.getPlayer().update(state);
         Profiler.endSection();
     }
 
@@ -160,24 +150,23 @@ public class Engine {
         GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
         Profiler.startSection("worldRender");
         state.getWorld().render(state.getOffset());
-        // TODO: Move to World methods
-        state.getWorld().getRenderServer().request(state.getPlayer().render(state.getOffset()));
+        //state.getWorld().getRenderServer().request(state.getPlayer().render(state.getOffset()));
 
         Profiler.endStartSection("profilingData");
         GL11.glTranslated(0, 0, -1);
 
 
-        fontRenderer.drawString("FPS: " + debugFps, 2, 2);
+        state.getFontRenderer().drawString("FPS: " + debugFps, 2, 2);
 
         int y = Display.getHeight() - FontRenderer.GLYPH_SIZE - 2;
-        fontRenderer.drawString("Profiling data:", 2, y);
-        fontRenderer.drawString("---------------", 2, y -= FontRenderer.GLYPH_SIZE + 2);
+        state.getFontRenderer().drawString("Profiling data:", 2, y);
+        state.getFontRenderer().drawString("---------------", 2, y -= FontRenderer.GLYPH_SIZE + 2);
         for(final Section s : Profiler.getSections()) {
-            fontRenderer.drawString(s.getSection() + ": " + s.getAverageTime() + "ms", 2, y -= FontRenderer.GLYPH_SIZE + 2);
+            state.getFontRenderer().drawString(s.getSection() + ": " + s.getAverageTime() + "ms", 2, y -= FontRenderer.GLYPH_SIZE + 2);
         }
-        fontRenderer.drawString("World meshes: " + state.getWorld().getRenderServer().getMeshes().size(), 2, y -= FontRenderer.GLYPH_SIZE + 2);
+        state.getFontRenderer().drawString("World meshes: " + state.getRenderServer().getMeshes().size(), 2, y -= FontRenderer.GLYPH_SIZE + 2);
         //noinspection UnusedAssignment
-        fontRenderer.drawString(
+        state.getFontRenderer().drawString(
                 String.format("Player: (%.2f, %.2f)<%.2f, %.2f>",
                         state.getPlayer().getBoundingBox().xMin(), state.getPlayer().getBoundingBox().yMin(),
                         state.getPlayer().getBoundingBox().xMax(), state.getPlayer().getBoundingBox().yMax()),
@@ -230,76 +219,6 @@ public class Engine {
         state.incrementFps();
     }
 
-    /**
-     * TODO: Extract to its own class?
-     */
-    @Value
-    public static final class EngineState {
-
-        private final Vec2f offset = new Vec2f(0, 0);
-
-        private final String runtimeName;
-        private final String runtimeVersion;
-        private final String jvmName;
-        private final String cpuArch;
-        private final String osName;
-        private final long maxMem;
-        private final long totalMem;
-        private final int cpuThreads;
-        private final boolean isDebuggerAttached;
-        private final boolean isRunningFromJar;
-
-        /**
-         * TODO: Mutable?
-         */
-        private final int fpsTarget = 60;
-
-        @NonFinal
-        @Setter(AccessLevel.PRIVATE)
-        private String glVendor, glRenderer, glVersion, glExtensions;
-
-        @Setter
-        @NonFinal
-        private World world;
-
-        @Setter
-        @NonFinal
-        private Player player;
-
-        @NonFinal
-        @Setter(AccessLevel.PRIVATE)
-        private int fps;
-
-        @SuppressWarnings("FieldMayBeFinal")
-        @NonFinal
-        @Getter
-        @Setter
-        private int vaos = 0;
-
-        private final boolean inTestMode;
-
-        private EngineState() {
-            // Tests whether or not we're in JUnit test mode. If we are, some stuff (eg. meshing) is disabled
-            inTestMode = Arrays.stream(Thread.currentThread().getStackTrace())
-                    .filter(e -> e.getClassName().contains("org.junit")).count() > 0;
-
-            runtimeName = System.getProperty("java.runtime.name");
-            runtimeVersion = System.getProperty("java.runtime.version");
-            jvmName = System.getProperty("java.vm.name");
-            cpuArch = System.getProperty("os.arch") + "/" + System.getProperty("sun.arch.data.model");
-            osName = System.getProperty("os.name");
-            maxMem = Runtime.getRuntime().maxMemory() / 1048576L;
-            totalMem = Runtime.getRuntime().totalMemory() / 1048576L;
-            cpuThreads = Runtime.getRuntime().availableProcessors();
-            isDebuggerAttached = JavaUtils.isDebuggerAttached();
-            isRunningFromJar = JavaUtils.isRunningInJar();
-        }
-
-        private void incrementFps() {
-            ++fps;
-        }
-    }
-
     public static void main(final String[] args) {
         instance.run();
     }
@@ -307,7 +226,6 @@ public class Engine {
     static {
         logger = Logger.getLogger("Engine");
         logger.setUseParentHandlers(false);
-        logger.setLevel(instance.getState().isInTestMode() ? Level.INFO : Level.FINEST);
         logger.addHandler(new GeneralLogHandler());
     }
 }

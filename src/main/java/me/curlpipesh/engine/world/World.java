@@ -3,14 +3,12 @@ package me.curlpipesh.engine.world;
 import lombok.AccessLevel;
 import lombok.Getter;
 import me.curlpipesh.engine.Engine;
-import me.curlpipesh.engine.Engine.EngineState;
+import me.curlpipesh.engine.EngineState;
+import me.curlpipesh.engine.entity.IEntity;
 import me.curlpipesh.engine.logging.LoggerFactory;
-import me.curlpipesh.engine.render.RenderServer;
 import me.curlpipesh.engine.util.Vec2f;
 
-import java.util.LinkedHashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -26,14 +24,12 @@ public class World {
     private final EngineState state;
 
     @Getter
-    private final RenderServer renderServer;
-
-    @Getter
     private final String name;
 
     @Getter(AccessLevel.PACKAGE)
     private final Logger logger;
 
+    // TODO: Misnomers; world dimensions
     private final int x;
     private final int y;
 
@@ -43,6 +39,10 @@ public class World {
     @Getter(AccessLevel.PACKAGE)
     private final Random rng;
 
+    @Getter
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    private final List<IEntity> entities;
+
     public World(final EngineState state, final String name, final long seed, final int x, final int y) {
         this.name = name;
         this.state = state;
@@ -50,8 +50,8 @@ public class World {
         this.x = x;
         this.y = y;
         rng = new Random(seed);
+        entities = new ArrayList<>();
         loadedChunks = new LinkedHashSet<>();
-        renderServer = new RenderServer(state);
         logger = LoggerFactory.getLogger(state, "World(" + name + ")");
     }
 
@@ -122,10 +122,12 @@ public class World {
 
     @SuppressWarnings("unused")
     public void update(final int delta) {
-        renderServer.update();
+        entities.forEach(e -> e.update(state));
+        state.getRenderServer().update();
     }
 
     public void render(final Vec2f renderOffset) {
-        renderServer.render(renderOffset);
+        state.getRenderServer().render(renderOffset);
+        entities.forEach(e -> state.getRenderServer().request(e.render(renderOffset)));
     }
 }

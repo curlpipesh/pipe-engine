@@ -19,6 +19,12 @@ public class RenderRequest {
 
     private int color;
 
+    @Getter
+    private int texture = 0;
+
+    @Getter
+    private boolean isPositionAbsolute = false;
+
     @Getter(AccessLevel.PACKAGE)
     private final RenderType type;
 
@@ -57,7 +63,11 @@ public class RenderRequest {
         if(compiled) {
             throw new IllegalStateException("Can't add vertices to a finalized render request!");
         }
-        vertices.add(new Vertex(x, y, z, color));
+        return vertex(x, y, z, 0, 0);
+    }
+
+    public RenderRequest vertex(final float x, final float y, final float z, final float u, final float v) {
+        vertices.add(new Vertex(x, y, z, color, u, v));
         return this;
     }
 
@@ -78,6 +88,16 @@ public class RenderRequest {
     public RenderRequest dimension(final float w, final float h) {
         dimensions.x(w);
         dimensions.y(h);
+        return this;
+    }
+
+    public RenderRequest texture(final int texture) {
+        this.texture = texture;
+        return this;
+    }
+
+    public RenderRequest absolute(final boolean e) {
+        isPositionAbsolute = e;
         return this;
     }
 

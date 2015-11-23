@@ -1,6 +1,6 @@
 package me.curlpipesh.engine.entity;
 
-import me.curlpipesh.engine.Engine.EngineState;
+import me.curlpipesh.engine.EngineState;
 import me.curlpipesh.engine.render.RenderRequest;
 import me.curlpipesh.engine.util.AxisAlignedBB;
 import me.curlpipesh.engine.util.Vec2f;

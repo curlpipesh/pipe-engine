@@ -1,7 +1,7 @@
 package me.curlpipesh.engine.entity.player;
 
 import lombok.Getter;
-import me.curlpipesh.engine.Engine.EngineState;
+import me.curlpipesh.engine.EngineState;
 import me.curlpipesh.engine.entity.IEntity;
 import me.curlpipesh.engine.render.RenderRequest;
 import me.curlpipesh.engine.render.RenderType;
