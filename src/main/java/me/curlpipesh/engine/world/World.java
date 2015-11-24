@@ -5,12 +5,16 @@ import lombok.Getter;
 import me.curlpipesh.engine.Engine;
 import me.curlpipesh.engine.EngineState;
 import me.curlpipesh.engine.entity.IEntity;
+import me.curlpipesh.engine.entity.player.Player;
 import me.curlpipesh.engine.logging.LoggerFactory;
+import me.curlpipesh.engine.util.NoSuchTileException;
 import me.curlpipesh.engine.util.Vec2f;
+import org.lwjgl.opengl.Display;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * @author audrey
@@ -29,9 +33,10 @@ public class World {
     @Getter(AccessLevel.PACKAGE)
     private final Logger logger;
 
-    // TODO: Misnomers; world dimensions
-    private final int x;
-    private final int y;
+    @Getter(AccessLevel.PACKAGE)
+    private final int worldChunkWidth;
+    @Getter(AccessLevel.PACKAGE)
+    private final int worldChunkHeight;
 
     @Getter(AccessLevel.PACKAGE)
     private final long seed;
@@ -43,12 +48,12 @@ public class World {
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private final List<IEntity> entities;
 
-    public World(final EngineState state, final String name, final long seed, final int x, final int y) {
+    public World(final EngineState state, final String name, final long seed, final int worldChunkWidth, final int worldChunkHeight) {
         this.name = name;
         this.state = state;
         this.seed = seed;
-        this.x = x;
-        this.y = y;
+        this.worldChunkWidth = worldChunkWidth;
+        this.worldChunkHeight = worldChunkHeight;
         rng = new Random(seed);
         entities = new ArrayList<>();
         loadedChunks = new LinkedHashSet<>();
@@ -57,8 +62,8 @@ public class World {
 
     public void loadWorld() {
         final long t0 = System.nanoTime();
-        for(int i = 0; i < x; i++) {
-            for(int j = 0; j < y; j++) {
+        for(int i = 0; i < worldChunkWidth; i++) {
+            for(int j = 0; j < worldChunkHeight; j++) {
                 loadedChunks.add(new Chunk(this, i, j));
             }
         }
@@ -76,7 +81,7 @@ public class World {
         Engine.getLogger().config(String.format("World mesh took %dms.", ms));
     }
 
-    public void setColorAtPosition(final double x, final double y, final int color) {
+    public void setColorAtPosition(final double x, final double y, final int color) throws NoSuchTileException {
         final long realX = Math.round(x) / Chunk.TILE_SIZE;
         final long realY = Math.round(y) / Chunk.TILE_SIZE;
 
@@ -90,12 +95,14 @@ public class World {
                 if(!state.isInTestMode()) {
                     chunk.mesh();
                 }
-                break;
+                return;
             }
         }
+
+        throw new NoSuchTileException(String.format("Wasn't able to find tile at position (%.2f, %.2f)!", x, y));
     }
 
-    public long getTileAtPosition(final double x, final double y) {
+    public long getTileAtPosition(final double x, final double y) throws NoSuchTileException {
         long tile = 0x0L;
         boolean found = false;
 
@@ -114,7 +121,7 @@ public class World {
         }
 
         if(!found) {
-            throw new IllegalStateException("Wasn't able to find tile at position (" + x + ", " + y + ")!");
+            throw new NoSuchTileException(String.format("Wasn't able to find tile at position (%.2f, %.2f)!", x, y));
         }
 
         return tile;
@@ -122,12 +129,45 @@ public class World {
 
     @SuppressWarnings("unused")
     public void update(final int delta) {
-        entities.forEach(e -> e.update(state));
         state.getRenderServer().update();
+        entities.forEach(e -> e.update(state));
     }
 
     public void render(final Vec2f renderOffset) {
         state.getRenderServer().render(renderOffset);
         entities.forEach(e -> state.getRenderServer().request(e.render(renderOffset)));
+    }
+
+    @SuppressWarnings("unused")
+    public void spawnPlayer(final Player player) {
+        // Normal RNG will produce predictable results because seed etc. Temporary hack
+        final Random r = new Random();
+        final int chunkX = r.nextInt(worldChunkWidth); // rng.nextInt(worldChunkWidth);
+        final List<Chunk> spawnColumnChunks = loadedChunks.stream().filter(c -> c.getChunkPos().x() == chunkX).collect(Collectors.toCollection(LinkedList::new));
+        spawnColumnChunks.sort((o1, o2) -> o1.getChunkPos().y() < o2.getChunkPos().y() ? -1 : o1.getChunkPos().y() > o2.getChunkPos().y() ? 1 : 0);
+
+        logger.info("Searching potential spawn column: " + chunkX);
+        chunkLoop: for(final Chunk c : spawnColumnChunks) {
+            for(int i = 0; i < Chunk.SIZE; i++) {
+                for(int j = 0; j < Chunk.SIZE; j++) {
+                    final long tile = c.getTiles()[i][j];
+                    if(Chunk.getType(tile) != 0x0) { // TODO: Air
+                        // At least two tiles of air above player spawn
+                        if(Chunk.SIZE - j > 1) {
+                            if(Chunk.getType(c.getTiles()[i][j + 1]) == 0) {
+                                if(Chunk.getType(c.getTiles()[i][j + 2]) == 0) {
+                                    final float x = i * Chunk.TILE_SIZE + (c.getChunkPos().x() * Chunk.SIZE * Chunk.TILE_SIZE);
+                                    final float y = (j + 1) * Chunk.TILE_SIZE + (c.getChunkPos().y() * Chunk.SIZE * Chunk.TILE_SIZE);
+                                    player.setWorldPos(x, y);
+                                    state.getOffset().add(new Vec2f(x - (Display.getWidth() / 2), y - (Display.getHeight() / 2)));
+                                    logger.info(String.format("Spawned player at (%.2f, %.2f)", x, y));
+                                    break chunkLoop;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

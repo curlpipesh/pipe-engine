@@ -38,6 +38,9 @@ public class Chunk {
     @SuppressWarnings("FieldCanBeLocal")
     private final World world;
 
+    @SuppressWarnings("FieldCanBeLocal")
+    private final long maxWorldHeight = 1700; // In max. Y values. Divide by tile size to get in tiles, chunk size to get in chunks
+
     public Chunk(final World world, final int chunkX, final int chunkY) {
         this.world = world;
         chunkPos = new Vec2i(chunkX, chunkY);
@@ -47,13 +50,13 @@ public class Chunk {
 
     public void generate() {
         final long t0 = System.nanoTime();
-        if(chunkPos.y() == 3) {
+        if(chunkPos.y() == world.getWorldChunkHeight() - 1) {
             for(int i = 0; i < SIZE; i++) {
                 final int maxY = (int) (SIZE * Math.min(Math.abs(Math.min(Noise.noise(world.getRng().nextDouble()) * 2, 1)), 0.25 * world.getRng().nextDouble()));
                 for(int j = 0; j < SIZE; j++) {
                     // > 16 ? green : grey
                     //tiles[i][j] = j > SIZE / 2 ? 0xFF0200FFFF337733L : 0xFF0100FFFF777777L;
-                    if(j < maxY) {
+                    if(j < maxY && (chunkPos.y() * SIZE * TILE_SIZE) + (j * TILE_SIZE) < maxWorldHeight) {
                         final long solid = 0xFF;
                         final long type = j == maxY - 1 ? 0x02 : j >= maxY - 4 ? 0x03 : 0x01;
                         final long active = 0xFF;
@@ -92,20 +95,20 @@ public class Chunk {
                             .vertex((i * TILE_SIZE), (j * TILE_SIZE) + TILE_SIZE, 1)
                             .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE) + TILE_SIZE, 1)
                             .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE), 1);
-
-                    debugRequest.color(isActive(tiles[i][j]) ? 0xFF00FF00 : 0xFFFF0000)
-                            // tldr: negative Z axis renders closer to the near plane, which
-                            // makes it render towards the top. Way counter-intuitive
-                            .vertex((i * TILE_SIZE), (j * TILE_SIZE), 0.99F)
-                            .vertex((i * TILE_SIZE), (j * TILE_SIZE) + TILE_SIZE, 0.99F)
-                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE) + TILE_SIZE, 0.99F)
-                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE), 0.99F)
-
-                            .vertex((i * TILE_SIZE), (j * TILE_SIZE), 0.99F)
-                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE), 0.99F)
-                            .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE) + TILE_SIZE, 0.99F)
-                            .vertex((i * TILE_SIZE), (j * TILE_SIZE) + TILE_SIZE, 0.99F);
                 }
+                debugRequest.color(isActive(tiles[i][j]) ? 0xFF00FF00 : 0xFFFF0000)
+                        // tldr: negative Z axis renders closer to the near plane, which
+                        // makes it render towards the top. Way counter-intuitive
+                        .vertex((i * TILE_SIZE), (j * TILE_SIZE), 0.99F)
+                        .vertex((i * TILE_SIZE), (j * TILE_SIZE) + TILE_SIZE, 0.99F)
+                        .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE) + TILE_SIZE, 0.99F)
+                        .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE), 0.99F)
+
+                        .vertex((i * TILE_SIZE), (j * TILE_SIZE), 0.99F)
+                        .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE), 0.99F)
+                        .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE) + TILE_SIZE, 0.99F)
+                        .vertex((i * TILE_SIZE), (j * TILE_SIZE) + TILE_SIZE, 0.99F);
+
             }
         }
         chunkRequest.position(chunkPos.x() * SIZE * TILE_SIZE, chunkPos.y() * SIZE * TILE_SIZE)

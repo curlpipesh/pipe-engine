@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.Value;
 import lombok.experimental.NonFinal;
 import me.curlpipesh.engine.entity.player.Player;
+import me.curlpipesh.engine.gui.IGui;
 import me.curlpipesh.engine.render.FontRenderer;
 import me.curlpipesh.engine.render.RenderServer;
 import me.curlpipesh.engine.util.JavaUtils;
@@ -14,9 +15,6 @@ import me.curlpipesh.engine.world.World;
 
 import java.util.Arrays;
 
-/**
- * TODO: Extract to its own class?
- */
 @Value
 public final class EngineState {
 
@@ -33,9 +31,7 @@ public final class EngineState {
     private final int cpuThreads;
     private final boolean isDebuggerAttached;
     private final boolean isRunningFromJar;
-    /**
-     * TODO: Mutable?
-     */
+
     private final int fpsTarget = 60;
 
     @NonFinal
@@ -53,6 +49,11 @@ public final class EngineState {
 
     @NonFinal
     @Setter(AccessLevel.PACKAGE)
+    private int fpsCounter;
+
+    @NonFinal
+    @Getter
+    @Setter(AccessLevel.PACKAGE)
     private int fps;
 
     @SuppressWarnings("FieldMayBeFinal")
@@ -64,6 +65,11 @@ public final class EngineState {
     private final boolean inTestMode;
 
     private final FontRenderer fontRenderer;
+
+    @NonFinal
+    @Getter
+    @Setter(AccessLevel.PACKAGE)
+    private IGui currentGui;
 
     EngineState() {
         // Tests whether or not we're in JUnit test mode. If we are, some stuff (eg. meshing) is disabled
@@ -94,6 +100,6 @@ public final class EngineState {
     }
 
     void incrementFps() {
-        ++fps;
+        ++fpsCounter;
     }
 }

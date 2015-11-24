@@ -2,10 +2,11 @@ package me.curlpipesh.engine;
 
 import lombok.Getter;
 import me.curlpipesh.engine.entity.player.Player;
+import me.curlpipesh.engine.gui.impl.GuiIngame;
 import me.curlpipesh.engine.logging.GeneralLogHandler;
 import me.curlpipesh.engine.profiler.Profiler;
-import me.curlpipesh.engine.profiler.Profiler.Section;
-import me.curlpipesh.engine.render.FontRenderer;
+import me.curlpipesh.engine.util.NoSuchTileException;
+import me.curlpipesh.engine.util.Vec2f;
 import me.curlpipesh.engine.world.Chunk;
 import me.curlpipesh.engine.world.World;
 import me.curlpipesh.gl.util.DisplayUtil;
@@ -30,8 +31,6 @@ public class Engine {
     private long lastFrame;
     private long lastFPS;
 
-    private int debugFps = 0;
-
     /**
      * We don't use the <tt>LoggerFactory</tt> for this because it's before
      * everything else is ready, meaning that we don't have a usable
@@ -43,7 +42,10 @@ public class Engine {
     @Getter
     private EngineState state;
 
-    private Engine() {}
+    private final Vec2f horizontalMotionVector = new Vec2f(0, 0), verticalMotionVector = new Vec2f(0, 0);
+
+    private Engine() {
+    }
 
     private void run() {
         DisplayUtil.buildDisplay(800, 600);
@@ -70,14 +72,18 @@ public class Engine {
         GL11.glEnable(GL11.GL_DEPTH_TEST);
 
         state.setWorld(new World(state, "Test world", 0xDEADBEEFBABEL, 16, 4));
-        state.setPlayer(new Player());
+        state.setPlayer(new Player(state));
         state.getPlayer().getBoundingBox().getPosition().x((Display.getWidth() / 2) - (Chunk.TILE_SIZE / 2));
         state.getPlayer().getBoundingBox().getPosition().y((Display.getHeight() / 2) - (Chunk.TILE_SIZE / 2));
         state.getPlayer().getBoundingBox().getDimensions().y(Chunk.TILE_SIZE);
         state.getPlayer().getBoundingBox().getDimensions().y(Chunk.TILE_SIZE);
+
+        state.setCurrentGui(new GuiIngame(state));
+
         lastFPS = getTime();
         getDelta();
         state.getWorld().loadWorld();
+        state.getWorld().spawnPlayer(state.getPlayer());
         state.getWorld().meshWorld();
         while(!Display.isCloseRequested()) {
             final int delta = getDelta();
@@ -112,29 +118,103 @@ public class Engine {
         Profiler.startSection("input");
 
         if(Display.isActive()) {
-            // 4 * ratio based off of 60 FPS
             // TODO: Prevent movement if player would intersect with solid tile
+            // Better solution: Store player position, do world update and
+            // stuff, then update offset by newPos - oldPos.
+
+            // 4 * ratio based off of 60 FPS
             final float offsetAmount = 4F * ((float) delta / 16.67F);
+            horizontalMotionVector.x(0F);
+            verticalMotionVector.y(0F);
+            float verticalOffsetTotal = 0F;
+            float horizontalOffsetTotal = 0F;
             if(Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-                state.getOffset().addY(offsetAmount);
+                //state.getOffset().addY(offsetAmount);
+                verticalMotionVector.y(offsetAmount);
+                verticalOffsetTotal += offsetAmount;
             }
             if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-                state.getOffset().addY(-offsetAmount);
+                //state.getOffset().addY(-offsetAmount);
+                verticalMotionVector.y(-offsetAmount);
+                verticalOffsetTotal -= offsetAmount;
             }
             if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
-                state.getOffset().addX(offsetAmount);
+                //state.getOffset().addX(offsetAmount);
+                horizontalMotionVector.x(offsetAmount);
+                horizontalOffsetTotal += offsetAmount;
             }
             if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
-                state.getOffset().addX(-offsetAmount);
+                //state.getOffset().addX(-offsetAmount);
+                horizontalMotionVector.x(-offsetAmount);
+                horizontalOffsetTotal -= offsetAmount;
             }
 
+            if(horizontalOffsetTotal != 0) {
+                if(state.getPlayer().applyVector(horizontalMotionVector)) {
+                    state.getOffset().addX(horizontalOffsetTotal);
+                } else {
+                    if(horizontalOffsetTotal > 0) {
+                        while(horizontalOffsetTotal > 0) {
+                            horizontalMotionVector.addX(-0.1F);
+                            horizontalOffsetTotal -= 0.1F;
+                        }
+                        if(horizontalOffsetTotal < 0) {
+                            horizontalOffsetTotal = 0;
+                        }
+                    } else if(horizontalOffsetTotal < 0) {
+                        while(horizontalOffsetTotal < 0) {
+                            horizontalMotionVector.addX(0.1F);
+                            horizontalOffsetTotal += 0.1F;
+                        }
+                        if(horizontalOffsetTotal > 0) {
+                            horizontalOffsetTotal = 0;
+                        }
+                    }
+                    if(state.getPlayer().applyVector(horizontalMotionVector)) {
+                        state.getOffset().addX(horizontalOffsetTotal);
+                    }
+                }
+            }
+
+            if(verticalOffsetTotal != 0) {
+                if(state.getPlayer().applyVector(verticalMotionVector)) {
+                    state.getOffset().addY(verticalOffsetTotal);
+                } else {
+                    if(verticalOffsetTotal > 0) {
+                        while(verticalOffsetTotal > 0) {
+                            verticalMotionVector.addY(-0.1F);
+                            verticalOffsetTotal -= 0.1F;
+                        }
+                        if(verticalOffsetTotal < 0) {
+                            verticalOffsetTotal = 0;
+                        }
+                    } else if(verticalOffsetTotal < 0) {
+                        while(verticalOffsetTotal < 0) {
+                            verticalMotionVector.addY(0.1F);
+                            verticalOffsetTotal += 0.1F;
+                        }
+                        if(verticalOffsetTotal > 0) {
+                            verticalOffsetTotal = 0;
+                        }
+                    }
+                    if(state.getPlayer().applyVector(verticalMotionVector)) {
+                        state.getOffset().addY(verticalOffsetTotal);
+                    }
+                }
+            }
+
+            // TODO: Proper input handling
             while(Mouse.next()) {
                 if(Mouse.getEventButtonState()) {
                     if(Mouse.getEventButton() == 0) {
                         final double x = state.getOffset().x() + Mouse.getX();
                         final double y = state.getOffset().y() + Mouse.getY();
-                        logger.warning("Color change at (" + x + ", " + y + ")");
-                        state.getWorld().setColorAtPosition(x, y, 0xFFFFFFFF);
+                        try {
+                            state.getWorld().setColorAtPosition(x, y, 0xFFFFFFFF);
+                            logger.warning("Color change at (" + x + ", " + y + ")");
+                        } catch(final NoSuchTileException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
@@ -142,7 +222,6 @@ public class Engine {
 
         Profiler.endStartSection("worldUpdate");
         state.getWorld().update(delta);
-        //state.getPlayer().update(state);
         Profiler.endSection();
     }
 
@@ -150,29 +229,8 @@ public class Engine {
         GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_COLOR_BUFFER_BIT);
         Profiler.startSection("worldRender");
         state.getWorld().render(state.getOffset());
-        //state.getWorld().getRenderServer().request(state.getPlayer().render(state.getOffset()));
-
-        Profiler.endStartSection("profilingData");
-        GL11.glTranslated(0, 0, -1);
-
-
-        state.getFontRenderer().drawString("FPS: " + debugFps, 2, 2);
-
-        int y = Display.getHeight() - FontRenderer.GLYPH_SIZE - 2;
-        state.getFontRenderer().drawString("Profiling data:", 2, y);
-        state.getFontRenderer().drawString("---------------", 2, y -= FontRenderer.GLYPH_SIZE + 2);
-        for(final Section s : Profiler.getSections()) {
-            state.getFontRenderer().drawString(s.getSection() + ": " + s.getAverageTime() + "ms", 2, y -= FontRenderer.GLYPH_SIZE + 2);
-        }
-        state.getFontRenderer().drawString("World meshes: " + state.getRenderServer().getMeshes().size(), 2, y -= FontRenderer.GLYPH_SIZE + 2);
-        //noinspection UnusedAssignment
-        state.getFontRenderer().drawString(
-                String.format("Player: (%.2f, %.2f)<%.2f, %.2f>",
-                        state.getPlayer().getBoundingBox().xMin(), state.getPlayer().getBoundingBox().yMin(),
-                        state.getPlayer().getBoundingBox().xMax(), state.getPlayer().getBoundingBox().yMax()),
-                2, y -= FontRenderer.GLYPH_SIZE + 2);
-
-        GL11.glTranslated(0, 0, 1);
+        Profiler.endStartSection("gui");
+        state.getCurrentGui().render(state, delta);
         Profiler.endSection();
 
         try {
@@ -211,8 +269,8 @@ public class Engine {
      */
     private void updateFPS() {
         if(getTime() - lastFPS > 1000) {
-            debugFps = state.getFps();
-            state.setFps(0);
+            state.setFps(state.getFpsCounter());
+            state.setFpsCounter(0);
             state.setVaos(0);
             lastFPS += 1000;
         }

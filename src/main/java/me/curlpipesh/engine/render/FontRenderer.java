@@ -4,26 +4,20 @@ import me.curlpipesh.engine.EngineState;
 import me.curlpipesh.gl.texture.TextureLoader;
 import org.lwjgl.opengl.GL11;
 
-/**
- * TODO: Use RenderRequests
- * ^ This means have a withTexture
- * ^ This means that withTexture would nuke VBOs (as of right now)
- *
- * @author audrey
- * @since 11/19/15.
- */
 @SuppressWarnings("unused")
 public class FontRenderer {
     @SuppressWarnings("FieldCanBeLocal")
     private final String charString =
+            // @formatter:off
             ("                " +
-                    "                " +
-                    " !\"#$%&'()*+,-./" +
-                    "0123456789:;<=>?" +
-                    "@ABCDEFGHIJKLMNO" +
-                    "PQRSTUVWXYZ[\\]^_" +
-                    "`abcdefghijklmno" +
-                    "pqrstuvwxyz{|}~ ");
+             "                " +
+             " !\"#$%&'()*+,-./" +
+             "0123456789:;<=>?" +
+             "@ABCDEFGHIJKLMNO" +
+             "PQRSTUVWXYZ[\\]^_" +
+             "`abcdefghijklmno" +
+             "pqrstuvwxyz{|}~ ");
+    // @formatter:on
 
     private final int textureId;
     
