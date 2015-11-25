@@ -1,7 +1,7 @@
 package me.curlpipesh.engine.entity.player;
 
 import lombok.Getter;
-import me.curlpipesh.engine.EngineState;
+import me.curlpipesh.engine.Engine;
 import me.curlpipesh.engine.entity.Entity;
 import me.curlpipesh.engine.render.RenderRequest;
 import me.curlpipesh.engine.render.RenderType;
@@ -21,8 +21,8 @@ public class Player extends Entity {
 
     private final AxisAlignedBB internalBoundingBox = new AxisAlignedBB();
 
-    public Player(final EngineState state) {
-        super(state);
+    public Player(final Engine engine) {
+        super(engine);
         internalBoundingBox.getDimensions().x(Chunk.TILE_SIZE);
         internalBoundingBox.getDimensions().y(Chunk.TILE_SIZE);
         internalBoundingBox.getPosition().x(Display.getWidth() / 2);
@@ -30,10 +30,10 @@ public class Player extends Entity {
     }
 
     @Override
-    public boolean update(final EngineState state) {
+    public boolean update(final Engine engine) {
         // Set offsets, make internal-only bounding box that holds actual position
-        boundingBox.getPosition().x(Display.getWidth() / 2 + state.getOffset().x());
-        boundingBox.getPosition().y(Display.getHeight() / 2 + state.getOffset().y());
+        boundingBox.getPosition().x(Display.getWidth() / 2 + engine.getOffset().x());
+        boundingBox.getPosition().y(Display.getHeight() / 2 + engine.getOffset().y());
         internalBoundingBox.getPosition().x(Display.getWidth() / 2);
         internalBoundingBox.getPosition().y(Display.getHeight() / 2);
         return true;

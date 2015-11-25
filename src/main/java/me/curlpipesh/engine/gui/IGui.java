@@ -1,6 +1,6 @@
 package me.curlpipesh.engine.gui;
 
-import me.curlpipesh.engine.EngineState;
+import me.curlpipesh.engine.Engine;
 
 /**
  * @author audrey
@@ -10,5 +10,5 @@ import me.curlpipesh.engine.EngineState;
 public interface IGui {
     void update(int delta);
 
-    void render(EngineState state, int delta);
+    void render(Engine engine, int delta);
 }

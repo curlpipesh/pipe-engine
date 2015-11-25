@@ -1,6 +1,6 @@
 package me.curlpipesh.engine.test;
 
-import me.curlpipesh.engine.Engine;
+import me.curlpipesh.engine.EngineTestApp;
 import me.curlpipesh.engine.world.Chunk;
 import me.curlpipesh.engine.world.World;
 import org.junit.After;
@@ -17,19 +17,19 @@ import static org.junit.Assert.assertEquals;
  * @since 11/17/15.
  */
 public class ChunkTest {
-    private static final Engine ENGINE;
+    private static final EngineTestApp ENGINE;
 
     static {
         // qwq
         final Constructor<?> c;
         try {
-            c = Engine.class.getDeclaredConstructor();
+            c = EngineTestApp.class.getDeclaredConstructor();
         } catch(final NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
         c.setAccessible(true);
         try {
-            ENGINE = (Engine) c.newInstance();
+            ENGINE = (EngineTestApp) c.newInstance();
         } catch(InstantiationException | InvocationTargetException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }

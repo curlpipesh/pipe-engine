@@ -100,6 +100,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>4.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>me.curlpipesh.gl</groupId>
             <artifactId>pipe-gl</artifactId>
             <version>0.2a</version>

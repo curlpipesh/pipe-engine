@@ -3,7 +3,7 @@ package me.curlpipesh.engine.render;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import me.curlpipesh.engine.EngineState;
+import me.curlpipesh.engine.Engine;
 import me.curlpipesh.engine.logging.LoggerFactory;
 import me.curlpipesh.engine.util.Vec2f;
 import me.curlpipesh.gl.tessellation.impl.VAOTessellator;
@@ -39,16 +39,16 @@ public class RenderServer {
     private final Logger logger;
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final EngineState state;
+    private final Engine engine;
 
     @SuppressWarnings("FieldCanBeLocal")
     private final long id;
 
-    public RenderServer(final EngineState state) {
-        this.state = state;
+    public RenderServer(final Engine engine) {
+        this.engine = engine;
         id = UUID.randomUUID().getMostSignificantBits() & 0xFFFFFFFFL;
         requests = new LinkedList<>();
-        logger = LoggerFactory.getLogger(state, "Render server " + Long.toHexString(id));
+        logger = LoggerFactory.getLogger(engine, "Render server " + Long.toHexString(id));
     }
 
     public boolean request(final RenderRequest request) {
@@ -59,11 +59,11 @@ public class RenderServer {
         if(request.getType() == RenderType.VBO) {
             requests.addLast(request);
         } else if(request.getType() == RenderType.VAO) {
-            state.setVaos(state.getVaos() + 1);
+            engine.setVaos(engine.getVaos() + 1);
 
             if(!request.isPositionAbsolute()) {
-                GL11.glTranslated(state.getOffset().x() + request.getPosition().x(),
-                        state.getOffset().y() + request.getPosition().y(),
+                GL11.glTranslated(engine.getOffset().x() + request.getPosition().x(),
+                        engine.getOffset().y() + request.getPosition().y(),
                         0);
             }
 
@@ -73,8 +73,8 @@ public class RenderServer {
             tess.bindAndDraw();
 
             if(!request.isPositionAbsolute()) {
-                GL11.glTranslated(-(state.getOffset().x() + request.getPosition().x()),
-                        -(state.getOffset().y() + request.getPosition().y()),
+                GL11.glTranslated(-(engine.getOffset().x() + request.getPosition().x()),
+                        -(engine.getOffset().y() + request.getPosition().y()),
                         0);
             }
         }

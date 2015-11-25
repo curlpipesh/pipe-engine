@@ -1,7 +1,6 @@
 package me.curlpipesh.engine.world;
 
 import lombok.Getter;
-import me.curlpipesh.engine.Engine;
 import me.curlpipesh.engine.render.RenderRequest;
 import me.curlpipesh.engine.render.RenderType;
 import me.curlpipesh.engine.util.AxisAlignedBB;
@@ -25,7 +24,7 @@ public class Chunk {
      */
     @Getter
     private final long[][] tiles;
-    
+
     public static final int SIZE = 32;
     public static final int TILE_SIZE = 16;
 
@@ -77,7 +76,7 @@ public class Chunk {
         }
         final long t1 = System.nanoTime();
         final long ms = TimeUnit.NANOSECONDS.toMillis(t1 - t0);
-        Engine.getLogger().config(String.format("Chunk %s generation took %dms.", chunkPos.toString(), ms));
+        world.getEngine().getLogger().config(String.format("Chunk %s generation took %dms.", chunkPos.toString(), ms));
     }
 
     public void mesh() {
@@ -115,10 +114,10 @@ public class Chunk {
                 .dimension(SIZE * TILE_SIZE, SIZE * TILE_SIZE).compile();
         debugRequest.position(chunkPos.x() * SIZE * TILE_SIZE, chunkPos.y() * SIZE * TILE_SIZE)
                 .dimension(SIZE * TILE_SIZE, SIZE * TILE_SIZE).compile();
-        if(!world.getState().getRenderServer().request(chunkRequest)) {
-            Engine.getLogger().severe("[Chunk" + chunkPos + "] Render request rejected!?");
+        if(!world.getEngine().getRenderServer().request(chunkRequest)) {
+            world.getEngine().getLogger().severe("[Chunk" + chunkPos + "] Render request rejected!?");
         } else {
-            world.getState().getRenderServer().request(debugRequest);
+            world.getEngine().getRenderServer().request(debugRequest);
         }
     }
 
@@ -149,7 +148,7 @@ public class Chunk {
     private void determineActiveStates() {
         for(int i = 0; i < SIZE; i++) {
             for(int j = 0; j < SIZE; j++) {
-                tiles[i][j] = setActive(tiles[i][j], getType(tiles[i][j]) == 0);
+                tiles[i][j] = setActive(tiles[i][j], getType(tiles[i][j]) != 0);
             }
         }
     }

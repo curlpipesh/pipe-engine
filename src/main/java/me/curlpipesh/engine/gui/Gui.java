@@ -2,7 +2,7 @@ package me.curlpipesh.engine.gui;
 
 import lombok.AccessLevel;
 import lombok.Getter;
-import me.curlpipesh.engine.EngineState;
+import me.curlpipesh.engine.Engine;
 
 /**
  * @author audrey
@@ -11,10 +11,10 @@ import me.curlpipesh.engine.EngineState;
 @SuppressWarnings("unused")
 public abstract class Gui implements IGui {
     @Getter(AccessLevel.PROTECTED)
-    private final EngineState state;
+    private final Engine engine;
 
-    public Gui(final EngineState state) {
-        this.state = state;
+    public Gui(final Engine engine) {
+        this.engine = engine;
     }
 
     @Override
@@ -22,6 +22,6 @@ public abstract class Gui implements IGui {
     }
 
     @Override
-    public void render(final EngineState state, final int delta) {
+    public void render(final Engine engine, final int delta) {
     }
 }

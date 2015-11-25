@@ -1,7 +1,7 @@
 package me.curlpipesh.engine.entity;
 
 import lombok.Getter;
-import me.curlpipesh.engine.EngineState;
+import me.curlpipesh.engine.Engine;
 import me.curlpipesh.engine.util.AxisAlignedBB;
 import me.curlpipesh.engine.util.Vec2f;
 
@@ -13,15 +13,15 @@ public abstract class Entity implements IEntity {
     @Getter
     private final AxisAlignedBB boundingBox;
 
-    private final EngineState state;
+    private final Engine engine;
 
-    public Entity(final EngineState state) {
-        this.state = state;
+    public Entity(final Engine engine) {
+        this.engine = engine;
         boundingBox = new AxisAlignedBB();
     }
 
     @Override
-    public boolean update(final EngineState state) {
+    public boolean update(final Engine engine) {
         return true;
     }
 
@@ -34,7 +34,7 @@ public abstract class Entity implements IEntity {
     @Override
     public boolean applyVector(final Vec2f v) {
         getBoundingBox().getPosition().add(v);
-        if(isColliding(state)) {
+        if(isColliding(engine)) {
             getBoundingBox().getPosition().sub(v).sub(v);
             return false;
         }

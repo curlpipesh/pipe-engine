@@ -1,6 +1,6 @@
 package me.curlpipesh.engine.render;
 
-import me.curlpipesh.engine.EngineState;
+import me.curlpipesh.engine.Engine;
 import me.curlpipesh.gl.texture.TextureLoader;
 import org.lwjgl.opengl.GL11;
 
@@ -25,10 +25,10 @@ public class FontRenderer {
     private static final int FONT_ATLAS_SIZE = 256;
     private static final float GLYPH_UV_SIZE = GLYPH_SIZE / (float) FONT_ATLAS_SIZE;
 
-    private final EngineState state;
+    private final Engine engine;
 
-    public FontRenderer(final EngineState state) {
-        this.state = state;
+    public FontRenderer(final Engine engine) {
+        this.engine = engine;
         textureId = TextureLoader.loadTexture(TextureLoader.loadImage("/me/curlpipesh/engine/font/font.png"));
     }
 
@@ -58,7 +58,7 @@ public class FontRenderer {
         final float yIndex = (charString.contains("" + c) ? (charString.indexOf(c) / 16) * GLYPH_SIZE : 0) / (float) FONT_ATLAS_SIZE;
 
 
-        state.getRenderServer().request(new RenderRequest("Render '" + c + "'", RenderType.VAO, GL11.GL_QUADS)
+        engine.getRenderServer().request(new RenderRequest("Render '" + c + "'", RenderType.VAO, GL11.GL_QUADS)
                 .color(0xFFFFFFFF)
                 .texture(textureId)
                 .vertex(x, y, 0, xIndex, yIndex + GLYPH_UV_SIZE)
@@ -66,7 +66,6 @@ public class FontRenderer {
                 .vertex(x + GLYPH_SIZE, y + GLYPH_SIZE, 0, xIndex + GLYPH_UV_SIZE, yIndex)
                 .vertex(x + GLYPH_SIZE, y, 0, xIndex + GLYPH_UV_SIZE, yIndex + GLYPH_UV_SIZE)
                 .absolute(true)
-                .compile()
-        );
+                .compile());
     }
 }

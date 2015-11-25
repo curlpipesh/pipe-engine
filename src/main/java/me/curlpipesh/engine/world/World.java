@@ -3,7 +3,7 @@ package me.curlpipesh.engine.world;
 import lombok.AccessLevel;
 import lombok.Getter;
 import me.curlpipesh.engine.Engine;
-import me.curlpipesh.engine.EngineState;
+import me.curlpipesh.engine.EngineTestApp;
 import me.curlpipesh.engine.entity.IEntity;
 import me.curlpipesh.engine.entity.player.Player;
 import me.curlpipesh.engine.logging.LoggerFactory;
@@ -25,7 +25,7 @@ public class World {
     private final Set<Chunk> loadedChunks;
 
     @Getter(AccessLevel.PACKAGE)
-    private final EngineState state;
+    private final Engine engine;
 
     @Getter
     private final String name;
@@ -48,16 +48,16 @@ public class World {
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
     private final List<IEntity> entities;
 
-    public World(final EngineState state, final String name, final long seed, final int worldChunkWidth, final int worldChunkHeight) {
+    public World(final Engine engine, final String name, final long seed, final int worldChunkWidth, final int worldChunkHeight) {
         this.name = name;
-        this.state = state;
+        this.engine = engine;
         this.seed = seed;
         this.worldChunkWidth = worldChunkWidth;
         this.worldChunkHeight = worldChunkHeight;
         rng = new Random(seed);
         entities = new ArrayList<>();
         loadedChunks = new LinkedHashSet<>();
-        logger = LoggerFactory.getLogger(state, "World(" + name + ")");
+        logger = LoggerFactory.getLogger(engine, "World(" + name + ")");
     }
 
     public void loadWorld() {
@@ -70,7 +70,7 @@ public class World {
         loadedChunks.stream().forEach(Chunk::generate);
         final long t1 = System.nanoTime();
         final long ms = TimeUnit.NANOSECONDS.toMillis(t1 - t0);
-        Engine.getLogger().config(String.format("World generation took %dms.", ms));
+        engine.getLogger().config(String.format("World generation took %dms.", ms));
     }
 
     public void meshWorld() {
@@ -78,7 +78,7 @@ public class World {
         loadedChunks.stream().forEach(Chunk::mesh);
         final long t1 = System.nanoTime();
         final long ms = TimeUnit.NANOSECONDS.toMillis(t1 - t0);
-        Engine.getLogger().config(String.format("World mesh took %dms.", ms));
+        engine.getLogger().config(String.format("World mesh took %dms.", ms));
     }
 
     public void setColorAtPosition(final double x, final double y, final int color) throws NoSuchTileException {
@@ -92,7 +92,7 @@ public class World {
             if(chunk.getChunkPos().x() == chunkX && chunk.getChunkPos().y() == chunkY) {
                 chunk.getTiles()[(int) (realX % Chunk.SIZE)][(int) (realY % Chunk.SIZE)] &= 0xFFFFFFFF00000000L;
                 chunk.getTiles()[(int) (realX % Chunk.SIZE)][(int) (realY % Chunk.SIZE)] |= 0xFFFFFFFF00000000L | color;
-                if(!state.isInTestMode()) {
+                if(!engine.isInTestMode()) {
                     chunk.mesh();
                 }
                 return;
@@ -129,13 +129,13 @@ public class World {
 
     @SuppressWarnings("unused")
     public void update(final int delta) {
-        state.getRenderServer().update();
-        entities.forEach(e -> e.update(state));
+        engine.getRenderServer().update();
+        entities.forEach(e -> e.update(engine));
     }
 
     public void render(final Vec2f renderOffset) {
-        state.getRenderServer().render(renderOffset);
-        entities.forEach(e -> state.getRenderServer().request(e.render(renderOffset)));
+        engine.getRenderServer().render(renderOffset);
+        entities.forEach(e -> engine.getRenderServer().request(e.render(renderOffset)));
     }
 
     @SuppressWarnings("unused")
@@ -151,7 +151,8 @@ public class World {
             for(int i = 0; i < Chunk.SIZE; i++) {
                 for(int j = 0; j < Chunk.SIZE; j++) {
                     final long tile = c.getTiles()[i][j];
-                    if(Chunk.getType(tile) != 0x0) { // TODO: Air
+                    // TODO: Proper type management
+                    if(Chunk.getType(tile) != 0x0) {
                         // At least two tiles of air above player spawn
                         if(Chunk.SIZE - j > 1) {
                             if(Chunk.getType(c.getTiles()[i][j + 1]) == 0) {
@@ -159,7 +160,7 @@ public class World {
                                     final float x = i * Chunk.TILE_SIZE + (c.getChunkPos().x() * Chunk.SIZE * Chunk.TILE_SIZE);
                                     final float y = (j + 1) * Chunk.TILE_SIZE + (c.getChunkPos().y() * Chunk.SIZE * Chunk.TILE_SIZE);
                                     player.setWorldPos(x, y);
-                                    state.getOffset().add(new Vec2f(x - (Display.getWidth() / 2), y - (Display.getHeight() / 2)));
+                                    engine.getOffset().add(new Vec2f(x - (Display.getWidth() / 2), y - (Display.getHeight() / 2)));
                                     logger.info(String.format("Spawned player at (%.2f, %.2f)", x, y));
                                     break chunkLoop;
                                 }
