@@ -96,8 +96,6 @@ public class Chunk {
                             .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE), 1);
                 }
                 debugRequest.color(isActive(tiles[i][j]) ? 0xFF00FF00 : 0xFFFF0000)
-                        // tldr: negative Z axis renders closer to the near plane, which
-                        // makes it render towards the top. Way counter-intuitive
                         .vertex((i * TILE_SIZE), (j * TILE_SIZE), 0.99F)
                         .vertex((i * TILE_SIZE), (j * TILE_SIZE) + TILE_SIZE, 0.99F)
                         .vertex((i * TILE_SIZE) + TILE_SIZE, (j * TILE_SIZE) + TILE_SIZE, 0.99F)
@@ -110,10 +108,20 @@ public class Chunk {
 
             }
         }
+        debugRequest.color(0xFF0000FF)
+                .vertex(0, 0)
+                .vertex(0, SIZE * TILE_SIZE)
+                .vertex(SIZE * TILE_SIZE, SIZE * TILE_SIZE)
+                .vertex(SIZE * TILE_SIZE, 0)
+
+                .vertex(0, 0)
+                .vertex(SIZE * TILE_SIZE, 0)
+                .vertex(SIZE * TILE_SIZE, SIZE * TILE_SIZE)
+                .vertex(0, SIZE * TILE_SIZE);
         chunkRequest.position(chunkPos.x() * SIZE * TILE_SIZE, chunkPos.y() * SIZE * TILE_SIZE)
                 .dimension(SIZE * TILE_SIZE, SIZE * TILE_SIZE).compile();
         debugRequest.position(chunkPos.x() * SIZE * TILE_SIZE, chunkPos.y() * SIZE * TILE_SIZE)
-                .dimension(SIZE * TILE_SIZE, SIZE * TILE_SIZE).compile();
+                .dimension(SIZE * TILE_SIZE, SIZE * TILE_SIZE).debug(true).compile();
         if(!world.getEngine().getRenderServer().request(chunkRequest)) {
             world.getEngine().getLogger().severe("[Chunk" + chunkPos + "] Render request rejected!?");
         } else {

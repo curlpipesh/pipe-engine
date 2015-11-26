@@ -19,7 +19,7 @@ public class FontRenderer {
              "pqrstuvwxyz{|}~ ");
     // @formatter:on
 
-    private final int textureId;
+    private int textureId;
     
     public static final int GLYPH_SIZE = 16;
     private static final int FONT_ATLAS_SIZE = 256;
@@ -29,6 +29,9 @@ public class FontRenderer {
 
     public FontRenderer(final Engine engine) {
         this.engine = engine;
+    }
+
+    public void init() {
         textureId = TextureLoader.loadTexture(TextureLoader.loadImage("/me/curlpipesh/engine/font/font.png"));
     }
 

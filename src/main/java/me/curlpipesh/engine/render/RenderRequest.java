@@ -25,6 +25,9 @@ public class RenderRequest {
     @Getter
     private boolean isPositionAbsolute = false;
 
+    @Getter
+    private boolean isDebug = false;
+
     @Getter(AccessLevel.PACKAGE)
     private final RenderType type;
 
@@ -98,6 +101,11 @@ public class RenderRequest {
 
     public RenderRequest absolute(final boolean e) {
         isPositionAbsolute = e;
+        return this;
+    }
+
+    public RenderRequest debug(final boolean e) {
+        isDebug = e;
         return this;
     }
 

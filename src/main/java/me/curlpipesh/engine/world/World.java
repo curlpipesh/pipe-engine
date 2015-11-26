@@ -3,7 +3,6 @@ package me.curlpipesh.engine.world;
 import lombok.AccessLevel;
 import lombok.Getter;
 import me.curlpipesh.engine.Engine;
-import me.curlpipesh.engine.EngineTestApp;
 import me.curlpipesh.engine.entity.IEntity;
 import me.curlpipesh.engine.entity.player.Player;
 import me.curlpipesh.engine.logging.LoggerFactory;
@@ -139,7 +138,7 @@ public class World {
     }
 
     @SuppressWarnings("unused")
-    public void spawnPlayer(final Player player) {
+    public void spawnPlayer(final Player player, final int tries) {
         // Normal RNG will produce predictable results because seed etc. Temporary hack
         final Random r = new Random();
         final int chunkX = r.nextInt(worldChunkWidth); // rng.nextInt(worldChunkWidth);
@@ -147,7 +146,7 @@ public class World {
         spawnColumnChunks.sort((o1, o2) -> o1.getChunkPos().y() < o2.getChunkPos().y() ? -1 : o1.getChunkPos().y() > o2.getChunkPos().y() ? 1 : 0);
 
         logger.info("Searching potential spawn column: " + chunkX);
-        chunkLoop: for(final Chunk c : spawnColumnChunks) {
+        for(final Chunk c : spawnColumnChunks) {
             for(int i = 0; i < Chunk.SIZE; i++) {
                 for(int j = 0; j < Chunk.SIZE; j++) {
                     final long tile = c.getTiles()[i][j];
@@ -162,13 +161,18 @@ public class World {
                                     player.setWorldPos(x, y);
                                     engine.getOffset().add(new Vec2f(x - (Display.getWidth() / 2), y - (Display.getHeight() / 2)));
                                     logger.info(String.format("Spawned player at (%.2f, %.2f)", x, y));
-                                    break chunkLoop;
+                                    return;
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+        if(tries > 0) {
+            spawnPlayer(player, tries - 1);
+        } else {
+            throw new IllegalStateException("Couldn't spawn player!");
         }
     }
 }

@@ -24,25 +24,23 @@ public class Player extends Entity {
     public Player(final Engine engine) {
         super(engine);
         internalBoundingBox.getDimensions().x(Chunk.TILE_SIZE);
-        internalBoundingBox.getDimensions().y(Chunk.TILE_SIZE);
+        internalBoundingBox.getDimensions().y(Chunk.TILE_SIZE * 2);
         internalBoundingBox.getPosition().x(Display.getWidth() / 2);
         internalBoundingBox.getPosition().y(Display.getHeight() / 2);
     }
 
     @Override
     public boolean update(final Engine engine) {
-        // Set offsets, make internal-only bounding box that holds actual position
+        super.update(engine);
         boundingBox.getPosition().x(Display.getWidth() / 2 + engine.getOffset().x());
         boundingBox.getPosition().y(Display.getHeight() / 2 + engine.getOffset().y());
-        internalBoundingBox.getPosition().x(Display.getWidth() / 2);
-        internalBoundingBox.getPosition().y(Display.getHeight() / 2);
         return true;
     }
 
     @Override
     public RenderRequest render(final Vec2f offset) {
         final RenderRequest r = new RenderRequest("Player", RenderType.VAO, GL11.GL_QUADS);
-        return r.dimension(Chunk.TILE_SIZE, Chunk.TILE_SIZE)
+        return r.dimension(internalBoundingBox.getDimensions().x(), internalBoundingBox.getDimensions().y())
                 .absolute(true)
                 .color(0xFF0000FF)
                 .vertex(internalBoundingBox.xMin(), internalBoundingBox.yMin())

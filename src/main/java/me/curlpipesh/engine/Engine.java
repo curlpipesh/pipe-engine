@@ -34,9 +34,10 @@ public final class Engine {
 
     private final int fpsTarget = 60;
 
-    /*@NonFinal
     @Setter
-    private String glVendor, glRenderer, glVersion, glExtensions;*/
+    @NonFinal
+    @SuppressWarnings("FieldMayBeFinal")
+    private String glVendor = "", glRenderer = "", glVersion = "", glExtensions = "";
 
     private static final Logger logger;
 
@@ -49,26 +50,33 @@ public final class Engine {
     @NonFinal
     private Player player;
 
-    @NonFinal
     @Setter
+    @NonFinal
     private int fpsCounter;
 
-    @NonFinal
     @Setter
+    @NonFinal
     private int fps;
 
-    @SuppressWarnings("FieldMayBeFinal")
-    @NonFinal
     @Setter
+    @NonFinal
+    @SuppressWarnings("FieldMayBeFinal")
     private int vaos = 0;
 
     private final boolean inTestMode;
 
+    @Setter
+    @NonFinal
+    @SuppressWarnings("FieldMayBeFinal")
+    private boolean inDebugMode = false;
+
     private final FontRenderer fontRenderer;
 
-    @NonFinal
     @Setter
+    @NonFinal
     private IGui currentGui;
+
+    private final Vec2f gravityVector = new Vec2f(0, -4.9F);
 
     public Engine() {
         // Tests whether or not we're in JUnit test mode. If we are, some stuff (eg. meshing) is disabled
@@ -86,8 +94,17 @@ public final class Engine {
         isDebuggerAttached = JavaUtils.isDebuggerAttached();
         isRunningFromJar = JavaUtils.isRunningInJar();
 
-        fontRenderer = new FontRenderer(this);
-        renderServer = new RenderServer(this);
+        if(!isInTestMode()) {
+            fontRenderer = new FontRenderer(this);
+            renderServer = new RenderServer(this);
+        } else {
+            fontRenderer = null;
+            renderServer = null;
+        }
+    }
+
+    public void init() {
+        fontRenderer.init();
     }
 
     public void setPlayer(final Player player) {
@@ -108,6 +125,6 @@ public final class Engine {
 
     static {
         logger = LoggerFactory.getLogger(Arrays.stream(Thread.currentThread().getStackTrace())
-                .filter(e -> e.getClassName().contains("org.junit")).count() > 0, "");
+                .filter(e -> e.getClassName().contains("org.junit")).count() > 0, "Engine");
     }
 }

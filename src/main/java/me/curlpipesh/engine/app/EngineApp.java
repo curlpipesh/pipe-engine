@@ -1,6 +1,5 @@
 package me.curlpipesh.engine.app;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import me.curlpipesh.engine.Engine;
 import me.curlpipesh.gl.util.DisplayUtil;
@@ -13,7 +12,7 @@ import org.lwjgl.opengl.GL11;
  * @since 11/24/15.
  */
 public abstract class EngineApp implements IEngineApp {
-    @Getter(AccessLevel.PROTECTED)
+    @Getter
     private final Engine engine;
 
     private long lastFrame;
@@ -36,9 +35,35 @@ public abstract class EngineApp implements IEngineApp {
         GL11.glCullFace(GL11.GL_BACK);
         GL11.glFrontFace(GL11.GL_CW);
         GL11.glEnable(GL11.GL_DEPTH_TEST);
-
+        engine.init();
         lastFPS = getTime();
         getDelta();
+        
+        engine.setGlVendor(GL11.glGetString(GL11.GL_VENDOR));
+        engine.setGlRenderer(GL11.glGetString(GL11.GL_RENDERER));
+        engine.setGlVersion(GL11.glGetString(GL11.GL_VERSION));
+        engine.setGlExtensions(GL11.glGetString(GL11.GL_EXTENSIONS));
+        
+        printTechnicalInfo();
+    }
+    
+    private void printTechnicalInfo() {
+        engine.getLogger().config("Runtime info:");
+        engine.getLogger().config("-------------");
+        engine.getLogger().config("Runtime name:       " + engine.getRuntimeName());
+        engine.getLogger().config("Runtime version:    " + engine.getRuntimeVersion());
+        engine.getLogger().config("JVM:                " + engine.getJvmName());
+        engine.getLogger().config("CPU Architecture:   " + engine.getCpuArch());
+        engine.getLogger().config("OS Name:            " + engine.getOsName());
+        engine.getLogger().config("Max Memory:         " + engine.getMaxMem());
+        engine.getLogger().config("Total Memory:       " + engine.getTotalMem());
+        engine.getLogger().config("CPU Threads:        " + engine.getCpuThreads());
+        engine.getLogger().config("Debugger attached?: " + engine.isDebuggerAttached());
+        engine.getLogger().config("Running from JAR?:  " + engine.isRunningFromJar());
+        //engine.getLogger().config("OpenGL Vendor:      " + engine.getGlVendor());
+        //engine.getLogger().config("OpenGL Renderer:    " + engine.getGlRenderer());
+        //engine.getLogger().config("OpenGL Version:     " + engine.getGlVersion());
+        //engine.getLogger().config("OpenGL Extensions:  " + engine.getGlExtensions());
     }
 
     @Override
@@ -47,7 +72,7 @@ public abstract class EngineApp implements IEngineApp {
             final int delta = getDelta();
             update(delta);
             render(delta);
-            Display.sync(getEngine().getFpsTarget());
+            Display.sync(engine.getFpsTarget());
         }
         Display.destroy();
     }
@@ -91,7 +116,7 @@ public abstract class EngineApp implements IEngineApp {
      */
     private void updateFPS() {
         if(getTime() - lastFPS > 1000) {
-            engine.setFps(getEngine().getFpsCounter());
+            engine.setFps(engine.getFpsCounter());
             engine.setFpsCounter(0);
             engine.setVaos(0);
             lastFPS += 1000;

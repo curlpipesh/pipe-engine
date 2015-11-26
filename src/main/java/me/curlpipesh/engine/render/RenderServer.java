@@ -59,6 +59,9 @@ public class RenderServer {
         if(request.getType() == RenderType.VBO) {
             requests.addLast(request);
         } else if(request.getType() == RenderType.VAO) {
+            if(request.isDebug() && !engine.isInDebugMode()) {
+                return false;
+            }
             engine.setVaos(engine.getVaos() + 1);
 
             if(!request.isPositionAbsolute()) {
@@ -99,7 +102,7 @@ public class RenderServer {
                                 vbo.color(v.getColor()).vertex(v.getX(), v.getY(), v.getZ());
                             }
                             vbo.compile();
-                            final Mesh mesh = new Mesh(request.getName(), vbo, request.getPosition(), request.getDimensions());
+                            final Mesh mesh = new Mesh(request.getName(), vbo, request.getPosition(), request.getDimensions(), request.isDebug());
                             if(meshes.stream().filter(m -> m.getName().equals(request.getName())).count() > 0) {
                                 // Delete old VBO
                                 final List<Mesh> deletes = new ArrayList<>();
@@ -122,14 +125,10 @@ public class RenderServer {
     }
 
     public void render(final Vec2f renderOffset) {
-        // For some reason these need to be rendered backwards. idfk.
-        // Example is chunk mesh renders
-        // Requesting renders as in the order of [chunk, debug] seems to be
-        // rendering as [debug, chunk]
-
         for(final Mesh mesh : meshes) {
-            //for(int i = meshes.size() - 1; i >= 0; i--) {
-            //final Mesh mesh = meshes.get(i);
+            if(mesh.isDebug() && !engine.isInDebugMode()) {
+                continue;
+            }
             final double xPos = mesh.getPosition().x() - renderOffset.x();
             final double yPos = mesh.getPosition().y() - renderOffset.y();
 
@@ -151,12 +150,15 @@ public class RenderServer {
         private final Vec2f position;
         @Getter(AccessLevel.PRIVATE)
         private final Vec2f dimensions;
+        @Getter(AccessLevel.PRIVATE)
+        private final boolean debug;
 
-        private Mesh(final String name, final Vbo vbo, final Vec2f position, final Vec2f dimensions) {
+        private Mesh(final String name, final Vbo vbo, final Vec2f position, final Vec2f dimensions, final boolean debug) {
             this.name = name;
             this.vbo = vbo;
             this.position = position;
             this.dimensions = dimensions;
+            this.debug = debug;
         }
     }
 }

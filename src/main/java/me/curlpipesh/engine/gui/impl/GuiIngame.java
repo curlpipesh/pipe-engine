@@ -5,6 +5,7 @@ import me.curlpipesh.engine.gui.Gui;
 import me.curlpipesh.engine.profiler.Profiler;
 import me.curlpipesh.engine.profiler.Profiler.Section;
 import me.curlpipesh.engine.render.FontRenderer;
+import me.curlpipesh.engine.world.Chunk;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
@@ -23,24 +24,25 @@ public class GuiIngame extends Gui {
 
     @Override
     public void render(final Engine engine, final int delta) {
-        GL11.glTranslated(0, 0, -1);
+        if(engine.isInDebugMode()) {
+            GL11.glTranslated(0, 0, -1);
+            engine.getFontRenderer().drawString("FPS: " + engine.getFps(), 2, 2);
 
-        engine.getFontRenderer().drawString("FPS: " + engine.getFps(), 2, 2);
-
-        int y = Display.getHeight() - FontRenderer.GLYPH_SIZE - 2;
-        engine.getFontRenderer().drawString("Profiling data:", 2, y);
-        engine.getFontRenderer().drawString("---------------", 2, y -= FontRenderer.GLYPH_SIZE + 2);
-        for(final Section s : Profiler.getSections()) {
-            engine.getFontRenderer().drawString(s.getSection() + ": " + s.getAverageTime() + "ms", 2, y -= FontRenderer.GLYPH_SIZE + 2);
+            int y = Display.getHeight() - FontRenderer.GLYPH_SIZE - 2;
+            engine.getFontRenderer().drawString("Profiling data:", 2, y);
+            engine.getFontRenderer().drawString("---------------", 2, y -= FontRenderer.GLYPH_SIZE + 2);
+            for(final Section s : Profiler.getSections()) {
+                engine.getFontRenderer().drawString(s.getSection() + ": " + s.getAverageTime() + "ms", 2, y -= FontRenderer.GLYPH_SIZE + 2);
+            }
+            engine.getFontRenderer().drawString("World meshes: " + engine.getRenderServer().getMeshes().size(), 2, y -= FontRenderer.GLYPH_SIZE + 2);
+            engine.getFontRenderer().drawString(
+                    String.format("Player: (%.2f, %.2f)<%.2f, %.2f>",
+                            engine.getPlayer().getBoundingBox().xMin() / Chunk.TILE_SIZE, engine.getPlayer().getBoundingBox().yMin() / Chunk.TILE_SIZE,
+                            engine.getPlayer().getBoundingBox().xMax() / Chunk.TILE_SIZE, engine.getPlayer().getBoundingBox().yMax() / Chunk.TILE_SIZE),
+                    2, y -= FontRenderer.GLYPH_SIZE + 2);
+            //noinspection UnusedAssignment
+            engine.getFontRenderer().drawString(".inAir: " + engine.getPlayer().isInAir(), 2, y -= FontRenderer.GLYPH_SIZE + 2);
+            GL11.glTranslated(0, 0, 1);
         }
-        engine.getFontRenderer().drawString("World meshes: " + engine.getRenderServer().getMeshes().size(), 2, y -= FontRenderer.GLYPH_SIZE + 2);
-        //noinspection UnusedAssignment
-        engine.getFontRenderer().drawString(
-                String.format("Player: (%.2f, %.2f)<%.2f, %.2f>",
-                        engine.getPlayer().getBoundingBox().xMin(), engine.getPlayer().getBoundingBox().yMin(),
-                        engine.getPlayer().getBoundingBox().xMax(), engine.getPlayer().getBoundingBox().yMax()),
-                2, y -= FontRenderer.GLYPH_SIZE + 2);
-
-        GL11.glTranslated(0, 0, 1);
     }
 }

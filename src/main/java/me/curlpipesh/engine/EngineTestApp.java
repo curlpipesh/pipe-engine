@@ -23,21 +23,14 @@ public class EngineTestApp extends EngineApp {
     private static final EngineTestApp instance = new EngineTestApp();
 
 
-
     private final Vec2f horizontalMotionVector = new Vec2f(0, 0), verticalMotionVector = new Vec2f(0, 0);
 
-    private EngineTestApp() {
+    public EngineTestApp() {
     }
     
     @Override
     public void init() {
         super.init();
-
-        /*getEngine().setGlVendor(GL11.glGetString(GL11.GL_VENDOR));
-        getEngine().setGlRenderer(GL11.glGetString(GL11.GL_RENDERER));
-        getEngine().setGlVersion(GL11.glGetString(GL11.GL_VERSION));
-        getEngine().setGlExtensions(GL11.glGetString(GL11.GL_EXTENSIONS));*/
-        printTechnicalInfo();
 
         getEngine().setWorld(new World(getEngine(), "Test world", 0xDEADBEEFBABEL, 16, 4));
         getEngine().setPlayer(new Player(getEngine()));
@@ -48,27 +41,8 @@ public class EngineTestApp extends EngineApp {
 
         getEngine().setCurrentGui(new GuiIngame(getEngine()));
         getEngine().getWorld().loadWorld();
-        getEngine().getWorld().spawnPlayer(getEngine().getPlayer());
+        getEngine().getWorld().spawnPlayer(getEngine().getPlayer(), 3);
         getEngine().getWorld().meshWorld();
-    }
-
-    private void printTechnicalInfo() {
-        getEngine().getLogger().config("Runtime info:");
-        getEngine().getLogger().config("-------------");
-        getEngine().getLogger().config("Runtime name:       " + getEngine().getRuntimeName());
-        getEngine().getLogger().config("Runtime version:    " + getEngine().getRuntimeVersion());
-        getEngine().getLogger().config("JVM:                " + getEngine().getJvmName());
-        getEngine().getLogger().config("CPU Architecture:   " + getEngine().getCpuArch());
-        getEngine().getLogger().config("OS Name:            " + getEngine().getOsName());
-        getEngine().getLogger().config("Max Memory:         " + getEngine().getMaxMem());
-        getEngine().getLogger().config("Total Memory:       " + getEngine().getTotalMem());
-        getEngine().getLogger().config("CPU Threads:        " + getEngine().getCpuThreads());
-        getEngine().getLogger().config("Debugger attached?: " + getEngine().isDebuggerAttached());
-        getEngine().getLogger().config("Running from JAR?:  " + getEngine().isRunningFromJar());
-        //getEngine().getLogger().config("OpenGL Vendor:      " + getEngine().getGlVendor());
-        //getEngine().getLogger().config("OpenGL Renderer:    " + getEngine().getGlRenderer());
-        //getEngine().getLogger().config("OpenGL Version:     " + getEngine().getGlVersion());
-        //getEngine().getLogger().config("OpenGL Extensions:  " + getEngine().getGlExtensions());
     }
 
     @Override
@@ -88,14 +62,14 @@ public class EngineTestApp extends EngineApp {
             verticalMotionVector.y(0F);
             float verticalOffsetTotal = 0F;
             float horizontalOffsetTotal = 0F;
-            if(Keyboard.isKeyDown(Keyboard.KEY_UP)) {
+            /*if(Keyboard.isKeyDown(Keyboard.KEY_UP)) {
                 verticalMotionVector.y(offsetAmount);
                 verticalOffsetTotal += offsetAmount;
             }
             if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
                 verticalMotionVector.y(-offsetAmount);
                 verticalOffsetTotal -= offsetAmount;
-            }
+            }*/
             if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
                 horizontalMotionVector.x(offsetAmount);
                 horizontalOffsetTotal += offsetAmount;
@@ -103,6 +77,18 @@ public class EngineTestApp extends EngineApp {
             if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
                 horizontalMotionVector.x(-offsetAmount);
                 horizontalOffsetTotal -= offsetAmount;
+            }
+
+            while(Keyboard.next()) {
+                if(Keyboard.getEventKeyState()) {
+                    if(Keyboard.getEventKey() == Keyboard.KEY_D) {
+                        getEngine().setInDebugMode(!getEngine().isInDebugMode());
+                    }
+                    if(Keyboard.getEventKey() == Keyboard.KEY_UP) {
+                        getEngine().getPlayer().jump();
+                        getEngine().getPlayer().applyVector(new Vec2f(0, 64));
+                    }
+                }
             }
 
             //////////////////////////////////////
@@ -136,7 +122,7 @@ public class EngineTestApp extends EngineApp {
                 }
             }
 
-            if(verticalOffsetTotal != 0) {
+            /*if(verticalOffsetTotal != 0) {
                 if(getEngine().getPlayer().applyVector(verticalMotionVector)) {
                     getEngine().getOffset().addY(verticalOffsetTotal);
                 } else {
@@ -161,13 +147,12 @@ public class EngineTestApp extends EngineApp {
                         getEngine().getOffset().addY(verticalOffsetTotal);
                     }
                 }
-            }
+            }*/
 
             //////////////////////////
             // Mouse event handling //
             //////////////////////////
 
-            // TODO: Proper mouse input handling
             while(Mouse.next()) {
                 if(Mouse.getEventButtonState()) {
                     if(Mouse.getEventButton() == 0) {

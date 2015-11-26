@@ -7,9 +7,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -17,33 +14,17 @@ import static org.junit.Assert.assertEquals;
  * @since 11/17/15.
  */
 public class ChunkTest {
-    private static final EngineTestApp ENGINE;
-
-    static {
-        // qwq
-        final Constructor<?> c;
-        try {
-            c = EngineTestApp.class.getDeclaredConstructor();
-        } catch(final NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-        c.setAccessible(true);
-        try {
-            ENGINE = (EngineTestApp) c.newInstance();
-        } catch(InstantiationException | InvocationTargetException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    private static final EngineTestApp ENGINE = new EngineTestApp();
 
     @Before
     public void before() {
-        ENGINE.getState().setWorld(new World(ENGINE.getState(), "TEST", 0xDEADBEEF, 4, 4));
-        ENGINE.getState().getWorld().loadWorld();
+        ENGINE.getEngine().setWorld(new World(ENGINE.getEngine(), "TEST", 0xDEADBEEF, 4, 4));
+        ENGINE.getEngine().getWorld().loadWorld();
     }
 
     @After
     public void after() {
-        ENGINE.getState().setWorld(null);
+        ENGINE.getEngine().setWorld(null);
     }
 
     @Test
@@ -51,20 +32,20 @@ public class ChunkTest {
         // Is this a terrible thing to be doing? Yes. Should I actually be exposing this kind of access? Probably not.
         // But I'm lazy, so meh.
         for(int i = 0; i < Chunk.SIZE; i++) {
-            ENGINE.getState().getWorld().getLoadedChunks().stream().toArray(Chunk[]::new)[0].getTiles()[i][i] = 0xFF0100FFFF123456L;
+            ENGINE.getEngine().getWorld().getLoadedChunks().stream().toArray(Chunk[]::new)[0].getTiles()[i][i] = 0xFF0100FFFF123456L;
         }
         for(int i = 0; i < Chunk.SIZE; i++) {
-            assertEquals(ENGINE.getState().getWorld().getTileAtPosition(i * Chunk.TILE_SIZE + 1, i * Chunk.TILE_SIZE + 1), 0xFF0100FFFF123456L);
+            assertEquals(ENGINE.getEngine().getWorld().getTileAtPosition(i * Chunk.TILE_SIZE + 1, i * Chunk.TILE_SIZE + 1), 0xFF0100FFFF123456L);
         }
     }
 
     @Test
     public void testSetColorAtPos() {
         for(int i = 0; i < Chunk.SIZE; i++) {
-            ENGINE.getState().getWorld().setColorAtPosition(i * Chunk.TILE_SIZE + 1, i * Chunk.TILE_SIZE + 1, 0xFFFFFFFF);
+            ENGINE.getEngine().getWorld().setColorAtPosition(i * Chunk.TILE_SIZE + 1, i * Chunk.TILE_SIZE + 1, 0xFFFFFFFF);
         }
         for(int i = 0; i < Chunk.SIZE; i++) {
-            assertEquals(Chunk.getColor(ENGINE.getState().getWorld()
+            assertEquals(Chunk.getColor(ENGINE.getEngine().getWorld()
                     .getTileAtPosition(i * Chunk.TILE_SIZE + 1, i * Chunk.TILE_SIZE + 1)), 0xFFFFFFFF);
         }
     }
