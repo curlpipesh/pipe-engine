@@ -80,6 +80,7 @@ public abstract class EngineApp implements IEngineApp {
     @Override
     public void update(final int delta) {
         updateFPS();
+        engine.setDelta(delta);
     }
 
     @Override

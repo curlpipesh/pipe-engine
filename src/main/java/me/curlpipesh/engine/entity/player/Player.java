@@ -1,6 +1,5 @@
 package me.curlpipesh.engine.entity.player;
 
-import lombok.Getter;
 import me.curlpipesh.engine.Engine;
 import me.curlpipesh.engine.entity.Entity;
 import me.curlpipesh.engine.render.RenderRequest;
@@ -15,11 +14,11 @@ import org.lwjgl.opengl.GL11;
  * @author audrey
  * @since 11/17/15.
  */
+@SuppressWarnings("Duplicates")
 public class Player extends Entity {
-    @Getter
-    private final AxisAlignedBB boundingBox = new AxisAlignedBB();
-
     private final AxisAlignedBB internalBoundingBox = new AxisAlignedBB();
+
+    private final Vec2f gravity = new Vec2f(0, 0);
 
     public Player(final Engine engine) {
         super(engine);
@@ -31,9 +30,52 @@ public class Player extends Entity {
 
     @Override
     public boolean update(final Engine engine) {
-        super.update(engine);
-        boundingBox.getPosition().x(Display.getWidth() / 2 + engine.getOffset().x());
-        boundingBox.getPosition().y(Display.getHeight() / 2 + engine.getOffset().y());
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        // This doesn't just use the parent functionality for this for a reason: Player position is //
+        // reliant on offsetting the entire world's rendering position and whatnot, and so the      //
+        // player class ends up having to duplicate this functionality.                             //
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        if(isJumping()) {
+            jumpVector.x(0);
+            if(jumpVector.y() > 1) {
+                jumpVector.mul(new Vec2f(0, engine.getDelta() / engine.getFrameMillisecondGoal()));
+                if(!applyVector(jumpVector)) {
+                    engine.getLogger().warning("Couldn't apply jump vector!?");
+                }/* else {
+                    engine.getOffset().addY(jumpVector.y());
+                }*/
+                jumpVector.div(new Vec2f(0, engine.getDelta() / engine.getFrameMillisecondGoal()));
+                jumpVector.y(jumpVector.y() / 2);
+            } else {
+                applyVector(jumpVector);
+                jumpVector.y(0);
+                setJumping(false);
+            }
+        } else {
+            if(isInAir()) {
+                gravity.x(0);
+                gravity.y(engine.getGravityVector().y() * (engine.getDelta() / engine.getFrameMillisecondGoal()));
+                applyVector(gravity);
+
+                //engine.getOffset().addY(gravity.y());
+            }
+        }
+
+        getBoundingBox().getPosition().x(Display.getWidth() / 2 + engine.getOffset().x());
+        getBoundingBox().getPosition().y(Display.getHeight() / 2 + engine.getOffset().y());
+        return true;
+    }
+
+
+    @Override
+    public boolean applyVector(final Vec2f v) {
+        getBoundingBox().getPosition().add(v);
+        if(isCollidingWithWorld(getEngine())) {
+            getBoundingBox().getPosition().sub(v);
+            return false;
+        }
+        getEngine().getOffset().addX(v.x());
+        getEngine().getOffset().addY(v.y());
         return true;
     }
 
@@ -49,10 +91,4 @@ public class Player extends Entity {
                 .vertex(internalBoundingBox.xMax(), internalBoundingBox.yMin())
                 .compile();
     }
-
-    /*@Override
-    public void setWorldPos(final float x, final float y) {
-        boundingBox.getPosition().x(x);
-        boundingBox.getPosition().y(y);
-    }*/
 }

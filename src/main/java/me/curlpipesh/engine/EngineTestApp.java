@@ -48,6 +48,7 @@ public class EngineTestApp extends EngineApp {
     @Override
     public void update(final int delta) {
         super.update(delta);
+        Display.setTitle("FPS: " + getEngine().getFps());
 
         Profiler.startSection("input");
 
@@ -57,27 +58,10 @@ public class EngineTestApp extends EngineApp {
             ////////////////////
 
             // 4 * ratio based off of 60 FPS
-            final float offsetAmount = 4F * ((float) delta / 16.67F);
+            final float offsetAmount = 4F * ((float) delta / getEngine().getFrameMillisecondGoal());
             horizontalMotionVector.x(0F);
             verticalMotionVector.y(0F);
-            float verticalOffsetTotal = 0F;
             float horizontalOffsetTotal = 0F;
-            /*if(Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-                verticalMotionVector.y(offsetAmount);
-                verticalOffsetTotal += offsetAmount;
-            }
-            if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-                verticalMotionVector.y(-offsetAmount);
-                verticalOffsetTotal -= offsetAmount;
-            }*/
-            if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
-                horizontalMotionVector.x(offsetAmount);
-                horizontalOffsetTotal += offsetAmount;
-            }
-            if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
-                horizontalMotionVector.x(-offsetAmount);
-                horizontalOffsetTotal -= offsetAmount;
-            }
 
             while(Keyboard.next()) {
                 if(Keyboard.getEventKeyState()) {
@@ -86,9 +70,18 @@ public class EngineTestApp extends EngineApp {
                     }
                     if(Keyboard.getEventKey() == Keyboard.KEY_UP) {
                         getEngine().getPlayer().jump();
-                        getEngine().getPlayer().applyVector(new Vec2f(0, 64));
+                        //getEngine().getPlayer().applyVector(new Vec2f(0, 64));
                     }
                 }
+            }
+
+            if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) {
+                horizontalMotionVector.x(offsetAmount);
+                horizontalOffsetTotal += offsetAmount;
+            }
+            if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)) {
+                horizontalMotionVector.x(-offsetAmount);
+                horizontalOffsetTotal -= offsetAmount;
             }
 
             //////////////////////////////////////
@@ -121,33 +114,6 @@ public class EngineTestApp extends EngineApp {
                     }
                 }
             }
-
-            /*if(verticalOffsetTotal != 0) {
-                if(getEngine().getPlayer().applyVector(verticalMotionVector)) {
-                    getEngine().getOffset().addY(verticalOffsetTotal);
-                } else {
-                    if(verticalOffsetTotal > 0) {
-                        while(verticalOffsetTotal > 0) {
-                            verticalMotionVector.addY(-0.1F);
-                            verticalOffsetTotal -= 0.1F;
-                        }
-                        if(verticalOffsetTotal < 0) {
-                            verticalOffsetTotal = 0;
-                        }
-                    } else if(verticalOffsetTotal < 0) {
-                        while(verticalOffsetTotal < 0) {
-                            verticalMotionVector.addY(0.1F);
-                            verticalOffsetTotal += 0.1F;
-                        }
-                        if(verticalOffsetTotal > 0) {
-                            verticalOffsetTotal = 0;
-                        }
-                    }
-                    if(getEngine().getPlayer().applyVector(verticalMotionVector)) {
-                        getEngine().getOffset().addY(verticalOffsetTotal);
-                    }
-                }
-            }*/
 
             //////////////////////////
             // Mouse event handling //

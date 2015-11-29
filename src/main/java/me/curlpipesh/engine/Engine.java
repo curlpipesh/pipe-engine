@@ -1,5 +1,6 @@
 package me.curlpipesh.engine;
 
+import lombok.Getter;
 import lombok.Setter;
 import lombok.Value;
 import lombok.experimental.NonFinal;
@@ -77,6 +78,15 @@ public final class Engine {
     private IGui currentGui;
 
     private final Vec2f gravityVector = new Vec2f(0, -4.9F);
+
+    @Getter
+    @Setter
+    @NonFinal
+    @SuppressWarnings("FieldMayBeFinal")
+    private int delta = 0;
+
+    @Getter
+    private final float frameMillisecondGoal = 1000.0F / 60.0F;
 
     public Engine() {
         // Tests whether or not we're in JUnit test mode. If we are, some stuff (eg. meshing) is disabled

@@ -1,5 +1,6 @@
 package me.curlpipesh.engine.entity;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import me.curlpipesh.engine.Engine;
 import me.curlpipesh.engine.util.AxisAlignedBB;
@@ -11,15 +12,17 @@ import me.curlpipesh.engine.world.Chunk;
  * @author audrey
  * @since 11/24/15.
  */
+@SuppressWarnings("Duplicates")
 public abstract class Entity implements IEntity {
     @Getter
     private final AxisAlignedBB boundingBox;
 
+    @Getter(AccessLevel.PROTECTED)
     private final Engine engine;
 
     private boolean isJumping = false;
 
-    private final Vec2f jumpVector = new Vec2f(0, 0);
+    protected final Vec2f jumpVector = new Vec2f(0, 0);
 
     private static final float OFFSET = 0.5F;
 
@@ -31,13 +34,13 @@ public abstract class Entity implements IEntity {
     @Override
     public boolean update(final Engine engine) {
         if(isJumping) {
-            engine.getLogger().config(jumpVector.y() + "");
             if(jumpVector.y() > 1) {
+                jumpVector.mul(new Vec2f(0, engine.getDelta() / engine.getFrameMillisecondGoal()));
                 if(!applyVector(jumpVector)) {
                     engine.getLogger().warning("Couldn't apply jump vector!?");
-                } else {
-                    jumpVector.y(jumpVector.y() / 2);
                 }
+                jumpVector.div(new Vec2f(0, engine.getDelta() / engine.getFrameMillisecondGoal()));
+                jumpVector.y(jumpVector.y() / 2);
             } else {
                 applyVector(jumpVector);
                 jumpVector.y(0);
@@ -79,15 +82,18 @@ public abstract class Entity implements IEntity {
         try {
             return Chunk.isSolid(engine.getWorld().getTileAtPosition(x, y));
         } catch(final NoSuchTileException e) {
-            // e.printStackTrace();
             return false;
         }
     }
 
     @Override
     public boolean isInAir() {
-        return !(Chunk.isSolid(engine.getWorld().getTileAtPosition(getBoundingBox().xMin() + OFFSET, getBoundingBox().yMin() - 1F + OFFSET))
-                || Chunk.isSolid(engine.getWorld().getTileAtPosition(getBoundingBox().xMax() - OFFSET, getBoundingBox().yMin() - 1F + OFFSET)));
+        try {
+            return !(Chunk.isSolid(engine.getWorld().getTileAtPosition(getBoundingBox().xMin() + OFFSET, getBoundingBox().yMin() - 1))
+                    || Chunk.isSolid(engine.getWorld().getTileAtPosition(getBoundingBox().xMax() - OFFSET, getBoundingBox().yMin() - 1)));
+        } catch(final NoSuchTileException e) {
+            return true;
+        }
     }
 
     @Override
@@ -95,13 +101,16 @@ public abstract class Entity implements IEntity {
         return isJumping;
     }
 
+    protected void setJumping(final boolean e) {
+        isJumping = e;
+    }
+
     @Override
     public void jump() {
-        System.out.println("Jump!");
         if(isJumping) {
             return;
         }
         isJumping = true;
-        jumpVector.y(Chunk.SIZE);
+        jumpVector.y(Chunk.TILE_SIZE * 4);
     }
 }

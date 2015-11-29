@@ -113,7 +113,8 @@ public class World {
 
         for(final Chunk chunk : loadedChunks) {
             if(chunk.getChunkPos().x() == chunkX && chunk.getChunkPos().y() == chunkY) {
-                tile = chunk.getTiles()[(int) (realX % Chunk.SIZE)][(int) (realY % Chunk.SIZE)];
+                // TODO: This will sometimes cause an ArrayIndexOutOfBoundsException (-1)
+                tile = chunk.getTiles()[(int) Math.abs(realX % Chunk.SIZE)][(int) Math.abs(realY % Chunk.SIZE)];
                 found = true;
                 break;
             }
@@ -139,7 +140,7 @@ public class World {
 
     @SuppressWarnings("unused")
     public void spawnPlayer(final Player player, final int tries) {
-        // Normal RNG will produce predictable results because seed etc. Temporary hack
+        // TODO: Normal RNG will produce predictable results because seed etc. Temporary hack
         final Random r = new Random();
         final int chunkX = r.nextInt(worldChunkWidth); // rng.nextInt(worldChunkWidth);
         final List<Chunk> spawnColumnChunks = loadedChunks.stream().filter(c -> c.getChunkPos().x() == chunkX).collect(Collectors.toCollection(LinkedList::new));
